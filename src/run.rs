@@ -8,17 +8,17 @@ pub struct Router {
     pub post: Vec<Route>,
 }
 
-pub struct Junior {
+pub struct Juri {
     router: Router,
 }
 
-impl Junior {
-    pub fn new() -> Junior {
+impl Juri {
+    pub fn new() -> Juri {
         let router = Router {
             get: [].to_vec(),
             post: [].to_vec(),
         };
-        Junior { router }
+        Juri { router }
     }
     pub fn run(&self, addr: &str) {
         let listener = TcpListener::bind(addr).unwrap();
