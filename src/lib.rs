@@ -1,6 +1,7 @@
 mod thread;
 mod run;
-pub mod handle;
+mod handle;
 
 pub use run::Juri;
-pub use handle::status;
+
+pub use handle::Context;

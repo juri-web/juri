@@ -1,7 +1,7 @@
-use super::handle::handle_connection;
+use super::handle::{handle_connection, Context};
 use super::thread::ThreadPool;
 use std::net::TcpListener;
-pub type Route = (String, fn() -> (String, String));
+pub type Route = (String, fn(context: Context));
 #[derive(Clone)]
 pub struct Router {
     pub get: Vec<Route>,
@@ -33,11 +33,11 @@ impl Juri {
         }
     }
 
-    pub fn get(&mut self, path: &str, handle: fn() -> (String, String)) {
+    pub fn get(&mut self, path: &str, handle: fn(context: Context)) {
         self.router.get.push((path.to_string(), handle))
     }
 
-    pub fn post(&mut self, path: &str, handle: fn() -> (String, String)) {
+    pub fn post(&mut self, path: &str, handle: fn(context: Context)) {
         self.router.post.push((path.to_string(), handle))
     }
 }
