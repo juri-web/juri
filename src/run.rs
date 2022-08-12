@@ -1,12 +1,7 @@
 use super::handle::{handle_connection, Context};
 use super::thread::ThreadPool;
 use std::net::TcpListener;
-pub type Route = (String, fn(context: Context));
-#[derive(Clone)]
-pub struct Router {
-    pub get: Vec<Route>,
-    pub post: Vec<Route>,
-}
+use super::router::Router;
 
 pub struct Juri {
     router: Router,

@@ -1,6 +1,6 @@
 use regex::Regex;
 
-use super::run::{Route, Router};
+use super::router::{Router, handle_router};
 use std::io::prelude::*;
 use std::net::TcpStream;
 const CRLF: &str = "\r\n";
@@ -9,30 +9,41 @@ type ReadBuffer = [u8; 1024];
 
 pub struct Context {
     stream: TcpStream,
-    method: String,
-    full_path: String,
+    pub method: String,
+    pub full_path: String,
+    pub path: String,
     // params Record<string, string | string[]> 从 path 中提取的已解码参数字典。
     // query Record<string, string | string[]> 从 URL 的 search 部分提取的已解码查询参数的字典。
     // hash 已解码 URL 的 hash 部分。总是以 #开头。如果 URL 中没有 hash，则为空字符串。
 }
 
 impl Context {
-    fn new(stream: TcpStream, buffer: ReadBuffer) -> Self {
-        let mut context = Context {
-            stream,
-            method: "GET".to_string(),
-            full_path: "/".to_string(),
-        };
+    fn new(mut stream: TcpStream) -> Self {
+        let mut buffer: ReadBuffer = [0; 1024];
+
+        stream.read(&mut buffer).unwrap();
+
         let header = String::from_utf8((&buffer).to_vec()).unwrap();
         let re = Regex::new(r"^(.*?) (.*?) (.*?)\r\n").unwrap();
         let caps = re.captures(&header).unwrap();
-        context.method = caps
+        let method = caps
             .get(1)
             .map_or("".to_string(), |m| m.as_str().to_string());
-        context.full_path = caps
+        let full_path = caps
             .get(2)
             .map_or("".to_string(), |m| m.as_str().to_string());
-        context
+
+        let re = Regex::new(r"^(.*?)(\?.*?)?(#.*?)?$").unwrap();
+        let caps = re.captures(&full_path).unwrap();
+        let path = caps
+            .get(1)
+            .map_or("".to_string(), |m| m.as_str().to_string());
+        Context {
+            stream,
+            method,
+            full_path,
+            path,
+        }
     }
 
     pub fn string(self, status_code: u16, contents: &str) {
@@ -54,31 +65,13 @@ impl Context {
     }
 }
 
-fn handle_router(context: &Context, router: Router) -> Option<Route> {
-    let mut routes = Vec::<Route>::new();
-    if context.method == "GET" {
-        routes = router.get;
-    } else if context.method == "POST" {
-        routes = router.post;
-    }
-    for route in routes {
-        if route.0 == context.full_path {
-            return Some(route);
-        }
-    }
-    None
-}
 
 fn handle_404(context: Context) {
     context.string(404, "");
 }
 
-pub fn handle_connection(mut stream: TcpStream, router: Router) {
-    let mut buffer: ReadBuffer = [0; 1024];
-
-    stream.read(&mut buffer).unwrap();
-
-    let context = Context::new(stream, buffer);
+pub fn handle_connection(stream: TcpStream, router: Router) {
+    let context = Context::new(stream);
 
     if let Some(route) = handle_router(&context, router) {
         route.1(context);
