@@ -1,8 +1,10 @@
 use regex::Regex;
 
-use super::router::{Router, handle_router};
-use std::io::prelude::*;
-use std::net::TcpStream;
+use super::router::{handle_router, Router};
+use std::{
+    io::{Read, Write},
+    net::TcpStream,
+};
 const CRLF: &str = "\r\n";
 /**1KB */
 type ReadBuffer = [u8; 1024];
@@ -12,9 +14,10 @@ pub struct Context {
     pub method: String,
     pub full_path: String,
     pub path: String,
-    // params Record<string, string | string[]> 从 path 中提取的已解码参数字典。
-    // query Record<string, string | string[]> 从 URL 的 search 部分提取的已解码查询参数的字典。
-    // hash 已解码 URL 的 hash 部分。总是以 #开头。如果 URL 中没有 hash，则为空字符串。
+    query_str: String,
+    pub hash: String, // params Record<string, string | string[]> 从 path 中提取的已解码参数字典。
+                      // query Record<string, string | string[]> 从 URL 的 search 部分提取的已解码查询参数的字典。
+                      // hash 已解码 URL 的 hash 部分。总是以 #开头。如果 URL 中没有 hash，则为空字符串。
 }
 
 impl Context {
@@ -33,16 +36,30 @@ impl Context {
             .get(2)
             .map_or("".to_string(), |m| m.as_str().to_string());
 
-        let re = Regex::new(r"^(.*?)(\?.*?)?(#.*?)?$").unwrap();
-        let caps = re.captures(&full_path).unwrap();
-        let path = caps
-            .get(1)
-            .map_or("".to_string(), |m| m.as_str().to_string());
+        let (path, query_str, hash) = handle_full_path(&full_path);
+
         Context {
             stream,
             method,
             full_path,
             path,
+            query_str,
+            hash,
+        }
+    }
+
+    pub fn query(&self, key: &str, default: &str) -> String {
+        if self.query_str.is_empty() {
+            default.to_string()
+        } else {
+            let re = Regex::new(&format!(r"[\?|\&]{}=(.*?)(\&|$)", key)).unwrap();
+            let caps = re.captures(&self.query_str);
+            if let Some(caps) = caps {
+                caps.get(1)
+                    .map_or(default.to_string(), |m| m.as_str().to_string())
+            } else {
+                default.to_string()
+            }
         }
     }
 
@@ -65,6 +82,20 @@ impl Context {
     }
 }
 
+fn handle_full_path(full_path: &String) -> (String, String, String) {
+    let re = Regex::new(r"^(.*?)(\?.*?)?(#.*?)?$").unwrap();
+    let caps = re.captures(&full_path).unwrap();
+    let path = caps
+        .get(1)
+        .map_or("".to_string(), |m| m.as_str().to_string());
+    let query_str = caps
+        .get(2)
+        .map_or("".to_string(), |m| m.as_str().to_string());
+    let hash = caps
+        .get(3)
+        .map_or("".to_string(), |m| m.as_str().to_string());
+    (path, query_str, hash)
+}
 
 fn handle_404(context: Context) {
     context.string(404, "");
