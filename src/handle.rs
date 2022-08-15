@@ -66,11 +66,6 @@ impl Context {
 
     pub fn string(self, status_code: u16, contents: &str) {
         let status = format!("HTTP/1.1 {} {}{}", status_code, "OK", CRLF);
-        self.write(status, contents.to_owned());
-    }
-
-    // 将响应写出到流
-    fn write(mut self, status: String, contents: String) {
         let content_type = format!("Content-Type: text/html;charset=utf-8{}", CRLF);
         let server = format!("Server: Rust{}", CRLF);
         let content_length = format!("Content-Length: {}{}", contents.as_bytes().len(), CRLF);
@@ -78,7 +73,24 @@ impl Context {
             "{0}{1}{2}{3}{4}{5}",
             status, server, content_type, content_length, CRLF, contents
         );
-        self.stream.write(response.as_bytes()).unwrap();
+        self.write(response.as_bytes());
+    }
+
+    pub fn json(self, status_code: u16, contents: &str) {
+        let status = format!("HTTP/1.1 {} {}{}", status_code, "OK", CRLF);
+        let content_type = format!("Content-Type: application/json;charset=utf-8{}", CRLF);
+        let server = format!("Server: Rust{}", CRLF);
+        let content_length = format!("Content-Length: {}{}", contents.as_bytes().len(), CRLF);
+        let response = format!(
+            "{0}{1}{2}{3}{4}{5}",
+            status, server, content_type, content_length, CRLF, contents
+        );
+        self.write(response.as_bytes());
+    }
+
+    // 将响应写出到流
+    fn write(mut self, buf: &[u8]) {
+        self.stream.write(buf).unwrap();
         self.stream.flush().unwrap();
     }
 }
