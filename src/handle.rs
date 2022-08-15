@@ -4,6 +4,7 @@ use super::router::{handle_router, Router};
 use std::{
     io::{Read, Write},
     net::TcpStream,
+    sync::Arc,
 };
 const CRLF: &str = "\r\n";
 /**1KB */
@@ -101,11 +102,11 @@ fn handle_404(context: Context) {
     context.string(404, "");
 }
 
-pub fn handle_connection(stream: TcpStream, router: Router) {
+pub fn handle_connection(stream: TcpStream, router: Arc<Router>) {
     let context = Context::new(stream);
 
-    if let Some(route) = handle_router(&context, router) {
-        route.1(context);
+    if let Some(fun) = handle_router(&context, router) {
+        fun(context);
     } else {
         handle_404(context);
     }

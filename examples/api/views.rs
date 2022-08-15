@@ -8,8 +8,7 @@ pub fn handle_index(context: juri::Context) {
     context.string(200, &content);
 }
 
-// 404页面
-pub fn handle_404(context: juri::Context) {
+pub fn handle_params(context: juri::Context) {
     let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/404.html")).unwrap();
     context.string(200, &content);
 }
