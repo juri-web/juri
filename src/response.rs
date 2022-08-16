@@ -1,6 +1,6 @@
 use std::{collections::HashMap, io::Write, net::TcpStream};
 
-const CRLF: &str = &&"\r\n";
+const CRLF: &str = "\r\n";
 
 pub struct Response {
     status_code: u16,

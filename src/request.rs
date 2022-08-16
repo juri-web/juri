@@ -13,6 +13,22 @@ pub struct Request {
 
 impl Request {
     pub fn new(stream: &mut TcpStream) -> Self {
+        // https://www.cnblogs.com/nxlhero/p/11670942.html
+        // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
+        // let mut buffer_bytes = Vec::<u8>::new();
+        // loop {
+        //     let mut buffer = vec![0u8; 1024 * 4];
+        //     let bytes_count = stream.read(&mut buffer).unwrap();
+        //     if bytes_count == 0 {
+        //         break;
+        //     } else {
+        //         buffer_bytes.append(&mut buffer);
+        //     }
+        // }
+        
+        // let header_bytes = Vec::<u8>::new();
+        // let body_bytes = Vec::<u8>::new();
+
         let mut buffer: ReadBuffer = [0; 1024];
 
         stream.read(&mut buffer).unwrap();
