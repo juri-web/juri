@@ -1,11 +1,12 @@
 use regex::Regex;
-use std::{io::Read, net::TcpStream};
+use std::{collections::HashMap, io::Read, net::TcpStream};
 /**1KB */
 type ReadBuffer = [u8; 1024];
 pub struct Request {
     pub method: String,
     pub full_path: String,
     pub path: String,
+    pub params_map: HashMap<String, String>,
     query_str: String,
     pub hash: String,
 }
@@ -32,6 +33,7 @@ impl Request {
             method,
             full_path,
             path,
+            params_map: HashMap::new(),
             query_str,
             hash,
         }
@@ -49,6 +51,17 @@ impl Request {
                 return Some(value.as_str().to_string());
             }
         }
+        None
+    }
+    pub fn param(&self, key: &str) -> Option<String> {
+        if self.params_map.is_empty() {
+            return None;
+        }
+
+        if let Some(value) = self.params_map.get(key) {
+            return Some(value.to_string());
+        }
+
         None
     }
 }
