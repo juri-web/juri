@@ -23,15 +23,15 @@ pub fn handle_router(
 ) -> Option<fn(Request) -> Response> {
     let route_list;
     if request.method == "GET" {
-        route_list = Some(router.get.clone());
+        route_list = Some(&router.get);
     } else if request.method == "POST" {
-        route_list = Some(router.post.clone());
+        route_list = Some(&router.post);
     } else {
         route_list = None
     }
     if let Some(route_list) = route_list {
         for route in route_list {
-            if let Some(map) = match_router_path(&route, request.path.clone()) {
+            if let Some(map) = match_router_path(route, request.path.clone()) {
                 request.params_map = map;
                 return Some(route.2);
             }
