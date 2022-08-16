@@ -1,11 +1,18 @@
+use crate::{Request, Response};
 use std::sync::Arc;
-use crate::{Response, Request};
 
 pub type Route = (String, fn(request: Request) -> Response);
 #[derive(Clone)]
 pub struct Router {
     pub get: Vec<Route>,
     pub post: Vec<Route>,
+}
+
+pub type MatchRoute = (String, Vec<String>, fn(request: Request) -> Response);
+#[derive(Clone)]
+pub struct MatchRouter {
+    pub get: Vec<MatchRoute>,
+    pub post: Vec<MatchRoute>,
 }
 
 pub fn handle_router(request: &Request, router: Arc<Router>) -> Option<fn(Request) -> Response> {

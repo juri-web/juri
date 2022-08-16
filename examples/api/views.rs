@@ -21,7 +21,7 @@ struct Point {
     y: i32,
 }
 
-pub fn handle_params(request: Request) -> Response {
+pub fn handle_params(_request: Request) -> Response {
     let point = Point { x: 2, y: 3 };
     let content = serde_json::to_string(&point).unwrap();
     Response::json_str(&content)
