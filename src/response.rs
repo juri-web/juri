@@ -40,7 +40,7 @@ impl Response {
         self
     }
 
-    fn get_response_str(self) -> String {
+    pub fn get_response_str(self) -> String {
         let status = format!("HTTP/1.1 {} {}{}", self.status_code, "OK", CRLF);
         let server = format!("Server: Rust{}", CRLF);
         let content_length = format!("Content-Length: {}{}", self.contents.as_bytes().len(), CRLF);

@@ -1,7 +1,8 @@
 use crate::router::{handle_router, MatchRoute, MatchRouter, Route, Router};
 use crate::thread::ThreadPool;
 use crate::{Request, Response};
-use std::net::TcpListener;
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 
 pub struct Juri {
@@ -24,11 +25,14 @@ impl Juri {
             let mut stream = stream.unwrap();
             let router = Arc::clone(&router);
             pool.execute(move || {
-                let mut request = Request::new(&mut stream);
+                let (headers_bytes, body_bytes) = handle_bytes(&mut stream);
+                let mut request = Request::new(headers_bytes, body_bytes);
 
                 if let Some(fun) = handle_router(&mut request, router) {
                     let response = fun(request);
-                    response.write(&mut stream);
+                    let response_str = response.get_response_str();
+                    stream.write(response_str.as_bytes()).unwrap();
+                    stream.flush().unwrap();
                 }
             });
         }
@@ -41,6 +45,61 @@ impl Juri {
     pub fn post(&mut self, path: &str, handle: fn(request: Request) -> Response) {
         self.router.post.push((path.to_string(), handle))
     }
+}
+
+fn handle_bytes(stream: &mut TcpStream) -> (Vec<Vec<u8>>, Vec<u8>) {
+    // https://www.cnblogs.com/nxlhero/p/11670942.html
+    // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
+    let mut headers_bytes = Vec::<Vec<u8>>::new();
+    let mut body_bytes = Vec::<u8>::new();
+    let mut temp_header_bytes = Vec::<u8>::new();
+    let mut flag_body = false;
+    loop {
+        let mut buffer = vec![0u8; 1024 * 4];
+        let bytes_count = stream.read(&mut buffer).unwrap();
+        if bytes_count == 0 {
+            break;
+        } else if flag_body {
+            body_bytes.append(&mut buffer);
+        } else {
+            let mut flag_n = false;
+            let mut flag_r = false;
+            let mut flag_index = 0;
+            for (index, value) in buffer.iter().enumerate() {
+                if flag_n {
+                    if *value == 10 {
+                        flag_r = true;
+                    } else {
+                        flag_n = false;
+                    }
+                }
+                if *value == 13 {
+                    flag_n = true;
+                }
+                if flag_n && flag_r {
+                    if index == flag_index + 1 {
+                        body_bytes.append(&mut buffer[(index + 1)..].to_vec());
+                        flag_body = true;
+                        break;
+                    } else if temp_header_bytes.len() == 0 {
+                        headers_bytes.push(buffer[flag_index..(index - 1)].to_vec().clone())
+                    } else {
+                        temp_header_bytes
+                            .append(&mut buffer[flag_index..(index - 1)].to_vec().clone());
+                        headers_bytes.push(temp_header_bytes.clone());
+                        temp_header_bytes.clear()
+                    }
+                    flag_index = index + 1;
+                    flag_n = false;
+                    flag_r = false;
+                }
+            }
+        }
+        if bytes_count < 1024 * 4 {
+            break;
+        }
+    }
+    (headers_bytes, body_bytes)
 }
 
 fn conversion_router(router: Router) -> MatchRouter {

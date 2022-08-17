@@ -1,58 +1,59 @@
 use regex::Regex;
-use std::{collections::HashMap, io::Read, net::TcpStream};
-/**1KB */
-type ReadBuffer = [u8; 1024];
+use std::collections::HashMap;
+
 pub struct Request {
     pub method: String,
     pub full_path: String,
     pub path: String,
+    pub header_map: HashMap<String, String>,
     pub params_map: HashMap<String, String>,
     query_str: String,
     pub hash: String,
+    pub body_bytes: Vec<u8>,
 }
 
 impl Request {
-    pub fn new(stream: &mut TcpStream) -> Self {
-        // https://www.cnblogs.com/nxlhero/p/11670942.html
-        // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
-        // let mut buffer_bytes = Vec::<u8>::new();
-        // loop {
-        //     let mut buffer = vec![0u8; 1024 * 4];
-        //     let bytes_count = stream.read(&mut buffer).unwrap();
-        //     if bytes_count == 0 {
-        //         break;
-        //     } else {
-        //         buffer_bytes.append(&mut buffer);
-        //     }
-        // }
-        
-        // let header_bytes = Vec::<u8>::new();
-        // let body_bytes = Vec::<u8>::new();
-
-        let mut buffer: ReadBuffer = [0; 1024];
-
-        stream.read(&mut buffer).unwrap();
-
-        let header = String::from_utf8((&buffer).to_vec()).unwrap();
-        let re = Regex::new(r"^(.*?) (.*?) (.*?)\r\n").unwrap();
-        let caps = re.captures(&header).unwrap();
-        let method = caps
-            .get(1)
-            .map_or("".to_string(), |m| m.as_str().to_string());
-        let full_path = caps
-            .get(2)
-            .map_or("".to_string(), |m| m.as_str().to_string());
-
-        let (path, query_str, hash) = handle_full_path(&full_path);
-
-        Request {
-            method,
-            full_path,
-            path,
+    pub fn new(headers_bytes: Vec<Vec<u8>>, body_bytes: Vec<u8>) -> Self {
+        let mut request = Request {
+            method: "GET".to_string(),
+            full_path: "full_path".to_string(),
+            path: "".to_string(),
+            header_map: HashMap::new(),
             params_map: HashMap::new(),
-            query_str,
-            hash,
+            query_str: "".to_string(),
+            hash: "".to_string(),
+            body_bytes,
+        };
+
+        for (index, value) in headers_bytes.iter().enumerate() {
+            let header = String::from_utf8(value.to_vec()).unwrap();
+            if index == 0 {
+                let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
+                let caps = re.captures(&header).unwrap();
+                request.method = caps
+                    .get(1)
+                    .map_or("".to_string(), |m| m.as_str().to_string());
+                request.full_path = caps
+                    .get(2)
+                    .map_or("".to_string(), |m| m.as_str().to_string());
+
+                let (path, query_str, hash) = handle_full_path(&request.full_path);
+                request.path = path;
+                request.query_str = query_str;
+                request.hash = hash;
+            } else {
+                let re = Regex::new(r"^(.*?):(.*?)$").unwrap();
+                let caps = re.captures(&header).unwrap();
+                let key = caps
+                    .get(1)
+                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                let value = caps
+                    .get(2)
+                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                request.header_map.insert(key, value);
+            }
         }
+        request
     }
 
     pub fn query(&self, key: &str) -> Option<String> {
@@ -69,6 +70,7 @@ impl Request {
         }
         None
     }
+
     pub fn param(&self, key: &str) -> Option<String> {
         if self.params_map.is_empty() {
             return None;
@@ -80,6 +82,19 @@ impl Request {
 
         None
     }
+
+    pub fn header(&self, key: &str) -> Option<String> {
+        if self.header_map.is_empty() {
+            return None;
+        }
+
+        if let Some(value) = self.header_map.get(key) {
+            return Some(value.to_string());
+        }
+
+        None
+    }
+
 }
 
 fn handle_full_path(full_path: &String) -> (String, String, String) {
