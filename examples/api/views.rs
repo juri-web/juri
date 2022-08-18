@@ -1,4 +1,4 @@
-use juri::{Request, Response};
+use juri::{json::ResponseExt, Request, Response};
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 
@@ -29,6 +29,5 @@ pub fn handle_params(request: Request) -> Response {
             .param("bb")
             .map_or("".to_string(), |q| q.as_str().to_string())
     );
-    let content = serde_json::to_string(&point).unwrap();
-    Response::json_str(&content)
+    Response::json(&point)
 }

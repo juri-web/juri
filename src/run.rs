@@ -1,7 +1,7 @@
 use crate::router::{handle_router, MatchRoute, MatchRouter, Route, Router};
 use crate::thread::ThreadPool;
 use crate::{Request, Response};
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
 
@@ -24,16 +24,18 @@ impl Juri {
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
             let router = Arc::clone(&router);
-            pool.execute(move || {
-                let (headers_bytes, body_bytes) = handle_bytes(&mut stream);
-                let mut request = Request::new(headers_bytes, body_bytes);
+            pool.execute(move || match handle_bytes(&mut stream) {
+                Ok((headers_bytes, body_bytes)) => {
+                    let mut request = Request::new(headers_bytes, body_bytes);
 
-                if let Some(fun) = handle_router(&mut request, router) {
-                    let response = fun(request);
-                    let response_str = response.get_response_str();
-                    stream.write(response_str.as_bytes()).unwrap();
-                    stream.flush().unwrap();
+                    if let Some(fun) = handle_router(&mut request, router) {
+                        let response = fun(request);
+                        let response_str = response.get_response_str();
+                        stream.write(response_str.as_bytes()).unwrap();
+                        stream.flush().unwrap();
+                    }
                 }
+                Err(e) => println!("{:?}", e),
             });
         }
     }
@@ -47,7 +49,7 @@ impl Juri {
     }
 }
 
-fn handle_bytes(stream: &mut TcpStream) -> (Vec<Vec<u8>>, Vec<u8>) {
+fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
     let mut headers_bytes = Vec::<Vec<u8>>::new();
@@ -56,7 +58,7 @@ fn handle_bytes(stream: &mut TcpStream) -> (Vec<Vec<u8>>, Vec<u8>) {
     let mut flag_body = false;
     loop {
         let mut buffer = vec![0u8; 1024 * 4];
-        let bytes_count = stream.read(&mut buffer).unwrap();
+        let bytes_count = stream.read(&mut buffer)?;
         if bytes_count == 0 {
             break;
         } else if flag_body {
@@ -99,7 +101,7 @@ fn handle_bytes(stream: &mut TcpStream) -> (Vec<Vec<u8>>, Vec<u8>) {
             break;
         }
     }
-    (headers_bytes, body_bytes)
+    Ok((headers_bytes, body_bytes))
 }
 
 fn conversion_router(router: Router) -> MatchRouter {
