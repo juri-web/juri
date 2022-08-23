@@ -29,10 +29,16 @@ impl Juri {
                     let mut request = Request::new(headers_bytes, body_bytes);
 
                     if let Some(fun) = handle_router(&mut request, router) {
+                        let path = request.path.clone();
+                        let method = request.method.clone();
                         let response = fun(request);
+                        let status_code = response.status_code;
                         let response_str = response.get_response_str();
+                        println!("INFO: {} {} {}", method, path, status_code);
                         stream.write(response_str.as_bytes()).unwrap();
                         stream.flush().unwrap();
+                    } else {
+                        println!("INFO: {} {} 404", request.method, request.path);
                     }
                 }
                 Err(e) => println!("{:?}", e),
@@ -104,6 +110,9 @@ fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
                 }
                 if flag_n && flag_r {
                     if index == point_index + 1 {
+                        if bytes_count == index + 1 {
+                            break;
+                        }
                         // * * / * * 13 10 * * * * or 13 10 * * * *
                         body_bytes.append(&mut buffer[(index + 1)..].to_vec());
                         flag_body = true;
