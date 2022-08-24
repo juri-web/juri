@@ -3,7 +3,7 @@ use std::{collections::HashMap, io::Write, net::TcpStream};
 const CRLF: &str = "\r\n";
 
 pub struct Response {
-    status_code: u16,
+    pub status_code: u16,
     contents: String,
     headers: HashMap<String, String>,
 }

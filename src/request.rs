@@ -95,6 +95,10 @@ impl Request {
         None
     }
 
+    pub fn form_data(self) {
+        let body = String::from_utf8(self.body_bytes.to_vec()).unwrap();
+        println!("{:?} {} {:?}", self.header_map, self.body_bytes.len(), body);
+    }
 }
 
 fn handle_full_path(full_path: &String) -> (String, String, String) {

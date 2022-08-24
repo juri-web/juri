@@ -1,6 +1,7 @@
 use crate::router::{handle_router, MatchRoute, MatchRouter, Route, Router};
 use crate::thread::ThreadPool;
 use crate::{Request, Response};
+use std::collections::HashMap;
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
@@ -19,7 +20,7 @@ impl Juri {
     }
     pub fn run(self, addr: &str) {
         let listener = TcpListener::bind(addr).unwrap();
-        let pool = ThreadPool::new(12);
+        let pool = ThreadPool::new(1);
         let router = Arc::new(conversion_router(self.router));
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
@@ -66,10 +67,11 @@ fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
         let bytes_count = stream.read(&mut buffer)?;
+        println!("{}", bytes_count);
         if bytes_count == 0 {
             break;
         } else if flag_body {
-            body_bytes.append(&mut buffer);
+            body_bytes.append(&mut buffer[..bytes_count].to_vec());
         } else {
             let mut flag_n = false;
             let mut flag_r = false;
@@ -82,7 +84,7 @@ fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
                 {
                     if temp_header_bytes.len() == 1 {
                         // 13 / 10 * * * *
-                        body_bytes.append(&mut buffer[(index + 1)..].to_vec());
+                        body_bytes.append(&mut buffer[(index + 1)..bytes_count].to_vec());
                         flag_body = true;
                         break;
                     } else {
@@ -114,7 +116,8 @@ fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
                             break;
                         }
                         // * * / * * 13 10 * * * * or 13 10 * * * *
-                        body_bytes.append(&mut buffer[(index + 1)..].to_vec());
+                        body_bytes.append(&mut buffer[(index + 1)..bytes_count].to_vec());
+
                         flag_body = true;
                         break;
                     } else if temp_header_bytes.len() == 0 {
