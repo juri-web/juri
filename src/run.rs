@@ -1,7 +1,6 @@
 use crate::router::{handle_router, MatchRoute, MatchRouter, Route, Router};
 use crate::thread::ThreadPool;
 use crate::{Request, Response};
-use std::collections::HashMap;
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;

@@ -1,4 +1,4 @@
-use juri::{json::{ResponseExt, RequestExt, Value}, Request, Response};
+use juri::{json::{ResponseExt}, Request, Response};
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 
