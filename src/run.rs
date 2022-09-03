@@ -174,10 +174,10 @@ fn conversion_route_list(route_list: &Vec<Route>) -> Vec<MatchRoute> {
                     path_re.push_str(path);
                 } else if let Some(index) = path.find('/') {
                     path_params.push(path[..index].to_string());
-                    path_re.push_str(format!("{}{}", r"/([^\/]*?)", &path[index..]).as_str());
+                    path_re.push_str(format!("{}{}", r"/([^/]*?)", &path[index..]).as_str());
                 } else {
                     path_params.push(path.to_string());
-                    path_re.push_str(r"/([^\/]*?)");
+                    path_re.push_str(r"/([^/]*?)");
                 }
             }
             params_list.push((format!(r"^{}$", path_re), path_params, route.1));
