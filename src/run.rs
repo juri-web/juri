@@ -4,9 +4,11 @@ use crate::{Request, Response};
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
+use colored::*;
 
 pub struct Juri {
     router: Router,
+    thread_size: usize,
 }
 
 impl Juri {
@@ -15,11 +17,16 @@ impl Juri {
             get: [].to_vec(),
             post: [].to_vec(),
         };
-        Juri { router }
+        Juri {
+            router,
+            thread_size: 6,
+        }
     }
     pub fn run(self, addr: &str) {
         let listener = TcpListener::bind(addr).unwrap();
-        let pool = ThreadPool::new(1);
+        println!("{}: listener port http://{} start", "Juri".green(), addr);
+        let pool = ThreadPool::new(self.thread_size);
+        println!("{}: thread size is {}", "Juri".green(), self.thread_size);
         let router = Arc::new(conversion_router(self.router));
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
@@ -28,20 +35,19 @@ impl Juri {
                 Ok((headers_bytes, body_bytes)) => {
                     let mut request = Request::new(headers_bytes, body_bytes);
 
+                    print!("INFO: {} {}", request.method, request.path);
                     if let Some(fun) = handle_router(&mut request, router) {
-                        let path = request.path.clone();
-                        let method = request.method.clone();
                         let response = fun(request);
                         let status_code = response.status_code;
                         let response_str = response.get_response_str();
-                        println!("INFO: {} {} {}", method, path, status_code);
+                        println!(" {}", status_code);
                         stream.write(response_str.as_bytes()).unwrap();
                         stream.flush().unwrap();
                     } else {
-                        println!("INFO: {} {} 404", request.method, request.path);
+                        println!(" 404");
                     }
                 }
-                Err(e) => println!("{:?}", e),
+                Err(e) => println!("{}: {:?}", "Juri".green(), e),
             });
         }
     }
@@ -66,7 +72,6 @@ fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
         let bytes_count = stream.read(&mut buffer)?;
-        println!("{}", bytes_count);
         if bytes_count == 0 {
             break;
         } else if flag_body {

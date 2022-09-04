@@ -1,9 +1,6 @@
 mod api;
 use juri::Juri;
 
-
-
-
 fn main() {
     let mut router = Juri::new();
     router.get("/", api::views::handle_index);
