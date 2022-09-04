@@ -1,14 +1,27 @@
 use crate::router::{handle_router, MatchRoute, MatchRouter, Route, Router};
 use crate::thread::ThreadPool;
 use crate::{Request, Response};
+use colored::*;
+use std::collections::HashMap;
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::sync::Arc;
-use colored::*;
 
 pub struct Juri {
     router: Router,
     thread_size: usize,
+    response_404: fn(request: Request) -> Response,
+}
+
+fn response_404(_request: Request) -> Response {
+    Response {
+        status_code: 404,
+        contents: "<h1>404</h1>".to_string(),
+        headers: HashMap::from([(
+            "Content-Type".to_string(),
+            "text/html;charset=utf-8\r\n".to_string(),
+        )]),
+    }
 }
 
 impl Juri {
@@ -20,6 +33,7 @@ impl Juri {
         Juri {
             router,
             thread_size: 6,
+            response_404,
         }
     }
     pub fn run(self, addr: &str) {
@@ -36,16 +50,17 @@ impl Juri {
                     let mut request = Request::new(headers_bytes, body_bytes);
 
                     print!("INFO: {} {}", request.method, request.path);
+                    let response;
                     if let Some(fun) = handle_router(&mut request, router) {
-                        let response = fun(request);
-                        let status_code = response.status_code;
-                        let response_str = response.get_response_str();
-                        println!(" {}", status_code);
-                        stream.write(response_str.as_bytes()).unwrap();
-                        stream.flush().unwrap();
+                        response = fun(request);
+                        println!(" {}", response.status_code);
                     } else {
+                        response = (self.response_404)(request);
                         println!(" 404");
                     }
+                    let response_str = response.get_response_str();
+                    stream.write(response_str.as_bytes()).unwrap();
+                    stream.flush().unwrap();
                 }
                 Err(e) => println!("{}: {:?}", "Juri".green(), e),
             });

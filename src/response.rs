@@ -4,8 +4,8 @@ const CRLF: &str = "\r\n";
 
 pub struct Response {
     pub status_code: u16,
-    contents: String,
-    headers: HashMap<String, String>,
+    pub contents: String,
+    pub headers: HashMap<String, String>,
 }
 
 impl Response {
