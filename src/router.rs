@@ -1,26 +1,29 @@
 use regex::Regex;
 
-use crate::{Request, Response};
+use crate::{response::ResultResponse, Request, Response};
 use std::{collections::HashMap, sync::Arc};
 
-pub type Route = (String, fn(request: Request) -> Response);
+#[derive(Clone)]
+pub enum HandleFn {
+    Result(fn(request: Request) -> ResultResponse<Response>),
+    Response(fn(request: Request) -> Response),
+}
+
+pub type Route = (String, HandleFn);
 #[derive(Clone)]
 pub struct Router {
     pub get: Vec<Route>,
     pub post: Vec<Route>,
 }
 
-pub type MatchRoute = (String, Vec<String>, fn(request: Request) -> Response);
+pub type MatchRoute = (String, Vec<String>, HandleFn);
 #[derive(Clone)]
 pub struct MatchRouter {
     pub get: Vec<MatchRoute>,
     pub post: Vec<MatchRoute>,
 }
 
-pub fn handle_router(
-    request: &mut Request,
-    router: Arc<MatchRouter>,
-) -> Option<fn(Request) -> Response> {
+pub fn handle_router(request: &mut Request, router: Arc<MatchRouter>) -> Option<HandleFn> {
     let route_list;
     if request.method == "GET" {
         route_list = Some(&router.get);
@@ -33,7 +36,7 @@ pub fn handle_router(
         for route in route_list {
             if let Some(map) = match_router_path(route, request.path.clone()) {
                 request.params_map = map;
-                return Some(route.2);
+                return Some(route.2.clone());
             }
         }
     }

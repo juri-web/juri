@@ -1,6 +1,6 @@
-use std::{collections::HashMap, io::Write, net::TcpStream};
+use std::collections::HashMap;
 
-const CRLF: &str = "\r\n";
+pub const CRLF: &str = "\r\n";
 
 pub struct Response {
     pub status_code: u16,
@@ -50,10 +50,25 @@ impl Response {
         }
         format!("{0}{1}{2}", headers_str, CRLF, self.contents)
     }
-
-    pub fn write(self, stream: &mut TcpStream) {
-        let response_str = self.get_response_str();
-        stream.write(response_str.as_bytes()).unwrap();
-        stream.flush().unwrap();
-    }
 }
+
+/// # Examples
+///```
+/// use juri::{Request, Response, ResultResponse};
+///
+/// fn result(flag: bool) -> ResultResponse<String> {
+///     if flag {
+///         Ok("Mode".to_string())
+///     } else {
+///         Err(Response::html_str(""))
+///    }
+/// }
+///
+/// pub fn handle_result_mode(request: Request) -> ResultResponse<Response> {
+///     // Use ? quickly return Response
+///     let point = result(true)?; 
+///
+///     Ok(Response::json_str(&point))
+/// }
+///```
+pub type ResultResponse<T> = Result<T, Response>;

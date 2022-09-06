@@ -1,6 +1,6 @@
-use crate::router::{handle_router, MatchRoute, MatchRouter, Route, Router};
+use crate::router::{handle_router, HandleFn, MatchRoute, MatchRouter, Route, Router};
 use crate::thread::ThreadPool;
-use crate::{Request, Response};
+use crate::{Request, Response, ResultResponse};
 use colored::*;
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
@@ -48,16 +48,30 @@ impl Juri {
             pool.execute(move || match handle_bytes(&mut stream) {
                 Ok((headers_bytes, body_bytes)) => {
                     let mut request = Request::new(headers_bytes, body_bytes);
-
-                    print!("INFO: {} {}", request.method, request.path);
-                    let response;
-                    if let Some(fun) = handle_router(&mut request, router) {
-                        response = fun(request);
-                        println!(" {}", response.status_code);
-                    } else {
-                        response = (self.response_404)(request);
-                        println!(" 404");
-                    }
+                    let method = request.method.clone();
+                    let path = request.path.clone();
+                    println!("{}: Request {} {}", "INFO".green(), method, path);
+                    let response = match handle_router(&mut request, router) {
+                        Some(fun) => match fun {
+                            HandleFn::Result(fun) => {
+                                let response = fun(request);
+                                let response = match response {
+                                    Ok(response) => response,
+                                    Err(response) => response,
+                                };
+                                response
+                            }
+                            HandleFn::Response(fun) => fun(request),
+                        },
+                        None => (self.response_404)(request),
+                    };
+                    println!(
+                        "{}: Response {} {} {}",
+                        "INFO".green(),
+                        method,
+                        path,
+                        response.status_code
+                    );
                     let response_str = response.get_response_str();
                     stream.write(response_str.as_bytes()).unwrap();
                     stream.flush().unwrap();
@@ -68,11 +82,35 @@ impl Juri {
     }
 
     pub fn get(&mut self, path: &str, handle: fn(request: Request) -> Response) {
-        self.router.get.push((path.to_string(), handle))
+        self.router
+            .get
+            .push((path.to_string(), HandleFn::Response(handle)));
     }
 
     pub fn post(&mut self, path: &str, handle: fn(request: Request) -> Response) {
-        self.router.post.push((path.to_string(), handle))
+        self.router
+            .post
+            .push((path.to_string(), HandleFn::Response(handle)));
+    }
+
+    pub fn get_result_mode(
+        &mut self,
+        path: &str,
+        handle: fn(request: Request) -> ResultResponse<Response>,
+    ) {
+        self.router
+            .get
+            .push((path.to_string(), HandleFn::Result(handle)));
+    }
+
+    pub fn post_result_mode(
+        &mut self,
+        path: &str,
+        handle: fn(request: Request) -> ResultResponse<Response>,
+    ) {
+        self.router
+            .post
+            .push((path.to_string(), HandleFn::Result(handle)));
     }
 }
 
@@ -185,7 +223,11 @@ fn conversion_route_list(route_list: &Vec<Route>) -> Vec<MatchRoute> {
     for route in route_list {
         let path_split_list: Vec<&str> = route.0.split("/:").collect();
         if path_split_list.len() == 1 {
-            not_params_list.push((format!(r"^{}$", path_split_list[0]), vec![], route.1));
+            not_params_list.push((
+                format!(r"^{}$", path_split_list[0]),
+                vec![],
+                route.1.clone(),
+            ));
         } else {
             let mut path_re = String::from("");
             let mut path_params: Vec<String> = vec![];
@@ -200,7 +242,7 @@ fn conversion_route_list(route_list: &Vec<Route>) -> Vec<MatchRoute> {
                     path_re.push_str(r"/([^/]*?)");
                 }
             }
-            params_list.push((format!(r"^{}$", path_re), path_params, route.1));
+            params_list.push((format!(r"^{}$", path_re), path_params, route.1.clone()));
         }
     }
     not_params_list.sort_by(|a, b| b.0.cmp(&a.0));
