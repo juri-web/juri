@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::collections::HashMap;
 
+#[derive(Clone)]
 pub struct Request {
     pub method: String,
     pub full_path: String,

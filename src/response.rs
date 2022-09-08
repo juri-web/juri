@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 pub const CRLF: &str = "\r\n";
 
+#[derive(Debug)]
 pub struct Response {
     pub status_code: u16,
     pub contents: String,
@@ -66,7 +67,7 @@ impl Response {
 ///
 /// pub fn handle_result_mode(request: Request) -> ResultResponse<Response> {
 ///     // Use ? quickly return Response
-///     let point = result(true)?; 
+///     let point = result(true)?;
 ///
 ///     Ok(Response::json_str(&point))
 /// }

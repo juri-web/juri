@@ -1,4 +1,5 @@
 use crate::byte::handle_bytes;
+use crate::error::JuriError;
 use crate::router::{conversion_router, handle_router, HandleFn, Router};
 use crate::thread::ThreadPool;
 use crate::{Request, Response, ResultResponse};
@@ -12,12 +13,24 @@ pub struct Juri {
     router: Router,
     thread_size: usize,
     response_404: fn(request: Request) -> Response,
+    response_500: fn(request: Request) -> Response,
 }
 
 fn response_404(_request: Request) -> Response {
     Response {
         status_code: 404,
         contents: "<h1>404</h1>".to_string(),
+        headers: HashMap::from([(
+            "Content-Type".to_string(),
+            "text/html;charset=utf-8\r\n".to_string(),
+        )]),
+    }
+}
+
+fn response_500(_request: Request) -> Response {
+    Response {
+        status_code: 500,
+        contents: "<h1>500</h1>".to_string(),
         headers: HashMap::from([(
             "Content-Type".to_string(),
             "text/html;charset=utf-8\r\n".to_string(),
@@ -35,6 +48,7 @@ impl Juri {
             router,
             thread_size: 6,
             response_404,
+            response_500,
         }
     }
     pub fn run(self, addr: &str) {
@@ -56,13 +70,25 @@ impl Juri {
                         Some(fun) => match fun {
                             HandleFn::Result(fun) => {
                                 let response = fun(request);
-                                let response = match response {
+                                match response {
                                     Ok(response) => response,
                                     Err(response) => response,
-                                };
-                                response
+                                }
                             }
                             HandleFn::Response(fun) => fun(request),
+                            HandleFn::Error(fun) => {
+                                let request_copy = request.clone();
+                                let response = fun(request);
+                                match response {
+                                    Ok(response) => response,
+                                    Err(err) => match err {
+                                        JuriError::CustomError(_) => {
+                                            (self.response_500)(request_copy)
+                                        }
+                                        JuriError::ResponseError(response) => response,
+                                    },
+                                }
+                            }
                         },
                         None => (self.response_404)(request),
                     };
@@ -112,5 +138,25 @@ impl Juri {
         self.router
             .post
             .push((path.to_string(), HandleFn::Result(handle)));
+    }
+
+    pub fn get_error_mode(
+        &mut self,
+        path: &str,
+        handle: fn(request: Request) -> crate::Result<Response>,
+    ) {
+        self.router
+            .get
+            .push((path.to_string(), HandleFn::Error(handle)));
+    }
+
+    pub fn post_error_mode(
+        &mut self,
+        path: &str,
+        handle: fn(request: Request) -> crate::Result<Response>,
+    ) {
+        self.router
+            .post
+            .push((path.to_string(), HandleFn::Error(handle)));
     }
 }
