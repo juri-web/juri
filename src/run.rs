@@ -1,7 +1,9 @@
 use crate::byte::handle_bytes;
+use crate::error::JuriError;
+use crate::plugin::handle_fn;
 use crate::router::{conversion_router, handle_router, HandleFn, Router};
 use crate::thread::ThreadPool;
-use crate::{Request, Response, ResultResponse};
+use crate::{JuriPlugin, Request, Response, ResultResponse};
 use colored::*;
 use std::collections::HashMap;
 use std::io::Write;
@@ -9,15 +11,28 @@ use std::net::TcpListener;
 use std::sync::Arc;
 
 pub struct Juri {
+    plugins: Vec<Box<dyn JuriPlugin>>,
     router: Router,
     thread_size: usize,
     response_404: fn(request: Request) -> Response,
+    response_500: fn(request: Request) -> Response,
 }
 
 fn response_404(_request: Request) -> Response {
     Response {
         status_code: 404,
         contents: "<h1>404</h1>".to_string(),
+        headers: HashMap::from([(
+            "Content-Type".to_string(),
+            "text/html;charset=utf-8\r\n".to_string(),
+        )]),
+    }
+}
+
+fn response_500(_request: Request) -> Response {
+    Response {
+        status_code: 500,
+        contents: "<h1>500</h1>".to_string(),
         headers: HashMap::from([(
             "Content-Type".to_string(),
             "text/html;charset=utf-8\r\n".to_string(),
@@ -35,6 +50,8 @@ impl Juri {
             router,
             thread_size: 6,
             response_404,
+            response_500,
+            plugins: vec![],
         }
     }
     pub fn run(self, addr: &str) {
@@ -43,29 +60,40 @@ impl Juri {
         let pool = ThreadPool::new(self.thread_size);
         println!("{}: thread size is {}", "Juri".green(), self.thread_size);
         let router = Arc::new(conversion_router(self.router));
+        let plugins = Arc::new(self.plugins);
+
         for stream in listener.incoming() {
             let mut stream = stream.unwrap();
             let router = Arc::clone(&router);
+            let plugins = Arc::clone(&plugins);
             pool.execute(move || match handle_bytes(&mut stream) {
                 Ok((headers_bytes, body_bytes)) => {
                     let mut request = Request::new(headers_bytes, body_bytes);
                     let method = request.method.clone();
                     let path = request.path.clone();
                     println!("{}: Request {} {}", "INFO".green(), method, path);
-                    let response = match handle_router(&mut request, router) {
-                        Some(fun) => match fun {
-                            HandleFn::Result(fun) => {
-                                let response = fun(request);
-                                let response = match response {
-                                    Ok(response) => response,
-                                    Err(response) => response,
-                                };
-                                response
+                    for plugin in plugins.iter() {
+                        plugin.request(&mut request);
+                    }
+                    let mut response = match handle_router(&mut request, router) {
+                        Some(fun) => {
+                            // FIXME 效率问题 The efficiency problem
+                            let request_copy = request.clone();
+
+                            let response = handle_fn(request, fun);
+                            match response {
+                                Ok(response) => response,
+                                Err(err) => match err {
+                                    JuriError::CustomError(_) => (self.response_500)(request_copy),
+                                    JuriError::ResponseError(response) => response,
+                                },
                             }
-                            HandleFn::Response(fun) => fun(request),
-                        },
+                        }
                         None => (self.response_404)(request),
                     };
+                    for plugin in plugins.iter() {
+                        plugin.response(&mut response);
+                    }
                     println!(
                         "{}: Response {} {} {}",
                         "INFO".green(),
@@ -112,5 +140,29 @@ impl Juri {
         self.router
             .post
             .push((path.to_string(), HandleFn::Result(handle)));
+    }
+
+    pub fn get_error_mode(
+        &mut self,
+        path: &str,
+        handle: fn(request: Request) -> crate::Result<Response>,
+    ) {
+        self.router
+            .get
+            .push((path.to_string(), HandleFn::Error(handle)));
+    }
+
+    pub fn post_error_mode(
+        &mut self,
+        path: &str,
+        handle: fn(request: Request) -> crate::Result<Response>,
+    ) {
+        self.router
+            .post
+            .push((path.to_string(), HandleFn::Error(handle)));
+    }
+
+    pub fn add_plugin(&mut self, plugin: Box<dyn JuriPlugin>) {
+        self.plugins.push(plugin)
     }
 }

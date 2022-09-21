@@ -5,6 +5,7 @@ use std::{collections::HashMap, sync::Arc};
 
 #[derive(Clone)]
 pub enum HandleFn {
+    Error(fn(request: Request) -> crate::Result<Response>),
     Result(fn(request: Request) -> ResultResponse<Response>),
     Response(fn(request: Request) -> Response),
 }
