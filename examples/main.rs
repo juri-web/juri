@@ -1,8 +1,23 @@
 mod api;
 use juri::Juri;
+use juri::JuriPlugin;
+
+struct MyPlugin {}
+
+impl JuriPlugin for MyPlugin {
+    fn request(&self, request: &mut juri::Request) {
+        println!("request.full_path {}", request.full_path)
+    }
+
+    fn response(&self, response: &mut juri::Response) {
+        println!("response.status_code {}", response.status_code)
+    }
+}
 
 fn main() {
     let mut router = Juri::new();
+    router.add_plugin(Box::new(MyPlugin {}));
+
     router.get("/", api::views::handle_index);
     router.get("/aa/bb", api::views::handle_index);
     router.get("/aa/:bb", api::views::handle_params);

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 pub const CRLF: &str = "\r\n";
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Response {
     pub status_code: u16,
     pub contents: String,
@@ -41,12 +41,12 @@ impl Response {
         self
     }
 
-    pub fn get_response_str(self) -> String {
+    pub fn get_response_str(&self) -> String {
         let status = format!("HTTP/1.1 {} {}{}", self.status_code, "OK", CRLF);
         let server = format!("Server: Rust{}", CRLF);
         let content_length = format!("Content-Length: {}{}", self.contents.as_bytes().len(), CRLF);
         let mut headers_str = format!("{0}{1}{2}", status, server, content_length);
-        for (key, value) in self.headers {
+        for (key, value) in self.headers.iter() {
             headers_str.push_str(format!("{}: {}", key, value).as_str());
         }
         format!("{0}{1}{2}", headers_str, CRLF, self.contents)
