@@ -5,8 +5,9 @@ use juri::JuriPlugin;
 struct MyPlugin {}
 
 impl JuriPlugin for MyPlugin {
-    fn request(&self, request: &mut juri::Request) {
-        println!("request.full_path {}", request.full_path)
+    fn request(&self, request: &mut juri::Request) -> Option<juri::Response> {
+        println!("request.full_path {}", request.full_path);
+        None
     }
 
     fn response(&self, response: &mut juri::Response) {

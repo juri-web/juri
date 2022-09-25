@@ -25,6 +25,6 @@ pub fn handle_fn(request: Request, fun: HandleFn) -> crate::Result<Response> {
 }
 
 pub trait JuriPlugin: Send + Sync + 'static {
-    fn request(&self, request: &mut Request);
+    fn request(&self, request: &mut Request) -> Option<Response>;
     fn response(&self, response: &mut Response);
 }

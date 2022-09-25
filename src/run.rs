@@ -72,25 +72,45 @@ impl Juri {
                     let method = request.method.clone();
                     let path = request.path.clone();
                     println!("{}: Request {} {}", "INFO".green(), method, path);
-                    for plugin in plugins.iter() {
-                        plugin.request(&mut request);
-                    }
-                    let mut response = match handle_router(&mut request, router) {
-                        Some(fun) => {
-                            // FIXME 效率问题 The efficiency problem
-                            let request_copy = request.clone();
 
-                            let response = handle_fn(request, fun);
-                            match response {
-                                Ok(response) => response,
-                                Err(err) => match err {
-                                    JuriError::CustomError(_) => (self.response_500)(request_copy),
-                                    JuriError::ResponseError(response) => response,
-                                },
+                    let mut plugin = plugins.iter();
+                    let plugin_response = loop {
+                        match plugin.next() {
+                            Some(plugin) => {
+                                let response = plugin.request(&mut request);
+                                if let Some(response) = response {
+                                    break Some(response);
+                                }
                             }
+                            None => break None,
                         }
-                        None => (self.response_404)(request),
                     };
+                    let mut response = match plugin_response {
+                        Some(response) => {
+                           response
+                        }
+                        None => {
+                            match handle_router(&mut request, router) {
+                                Some(fun) => {
+                                    // FIXME 效率问题 The efficiency problem
+                                    let request_copy = request.clone();
+
+                                    let response = handle_fn(request, fun);
+                                    match response {
+                                        Ok(response) => response,
+                                        Err(err) => match err {
+                                            JuriError::CustomError(_) => {
+                                                (self.response_500)(request_copy)
+                                            }
+                                            JuriError::ResponseError(response) => response,
+                                        },
+                                    }
+                                }
+                                None => (self.response_404)(request),
+                            }
+                        },
+                    };
+            
                     for plugin in plugins.iter() {
                         plugin.response(&mut response);
                     }
