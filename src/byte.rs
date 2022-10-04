@@ -1,16 +1,55 @@
-use std::{net::TcpStream, io::{self, Read}};
+use std::{
+    collections::HashMap,
+    io::{self, Read},
+    net::TcpStream,
+};
 
-pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
+use regex::Regex;
+
+fn handle_request_line_bytes(line_bytes: Vec<u8>) -> (String, String, String) {
+    let line = String::from_utf8(line_bytes).unwrap();
+    println!("line {}", line);
+    let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
+    let caps = re.captures(&line).unwrap();
+    let method = caps
+        .get(1)
+        .map_or("".to_string(), |m| m.as_str().to_string());
+    let full_path = caps
+        .get(2)
+        .map_or("".to_string(), |m| m.as_str().to_string());
+    let version = caps
+        .get(3)
+        .map_or("".to_string(), |m| m.as_str().to_string());
+    (method, full_path, version)
+}
+
+fn handle_header_bytes(header_bytes: Vec<u8>) -> (String, String) {
+    let header = String::from_utf8(header_bytes).unwrap();
+    println!("header {}", header);
+    let re = Regex::new(r"^(.*?):(.*?)$").unwrap();
+    let caps = re.captures(&header).unwrap();
+    let key = caps
+        .get(1)
+        .map_or("".to_string(), |m| m.as_str().trim().to_string());
+    let value = caps
+        .get(2)
+        .map_or("".to_string(), |m| m.as_str().trim().to_string());
+    (key, value)
+}
+
+pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(HashMap<String, String>, Vec<u8>)> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
-    let mut headers_bytes = Vec::<Vec<u8>>::new();
+    let mut header_map = HashMap::<String, String>::new();
     let mut body_bytes = Vec::<u8>::new();
     let mut temp_header_bytes = Vec::<u8>::new();
     let mut flag_body = false;
     const BUFFER_SIZE: usize = 1024 * 2;
+    println!("--------------#####，{:#?}", stream);
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
         let bytes_count = stream.read(&mut buffer)?;
+        println!("--------------");
         if bytes_count == 0 {
             break;
         } else if flag_body {
@@ -32,11 +71,22 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>
                         break;
                     } else {
                         // * * * * 13 / 10 * * * *
-                        headers_bytes.push(
-                            temp_header_bytes[..temp_header_bytes.len() - 1]
-                                .to_vec()
-                                .clone(),
-                        );
+                        println!("1");
+                        let header_bytes = temp_header_bytes[..temp_header_bytes.len() - 1]
+                            .to_vec()
+                            .clone();
+                        if let Some(_method) = header_map.get("Method") {
+                            println!("4");
+                            let (key, value) = handle_header_bytes(header_bytes);
+                            header_map.insert(key, value);
+                        } else {
+                            println!("5");
+                            let (method, full_path, version) =
+                                handle_request_line_bytes(header_bytes);
+                            header_map.insert("Method".to_string(), method);
+                            header_map.insert("FullPath".to_string(), full_path);
+                            header_map.insert("Version".to_string(), version);
+                        }
                         temp_header_bytes.clear();
                         point_index = index + 1;
                         continue;
@@ -65,12 +115,38 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>
                         break;
                     } else if temp_header_bytes.len() == 0 {
                         // * * * * 13 10 * * * *
-                        headers_bytes.push(buffer[point_index..(index - 1)].to_vec().clone());
+                        println!("2");
+                        let header_bytes = buffer[point_index..(index - 1)].to_vec().clone();
+                        if let Some(_method) = header_map.get("Method") {
+                            println!("4");
+                            let (key, value) = handle_header_bytes(header_bytes);
+                            header_map.insert(key, value);
+                        } else {
+                            println!("5");
+                            let (method, full_path, version) =
+                                handle_request_line_bytes(header_bytes);
+                            header_map.insert("Method".to_string(), method);
+                            header_map.insert("FullPath".to_string(), full_path);
+                            header_map.insert("Version".to_string(), version);
+                        }
                     } else {
                         // * * / * * 13 10 * * * *
+                        println!("3");
                         temp_header_bytes
                             .append(&mut buffer[point_index..(index - 1)].to_vec().clone());
-                        headers_bytes.push(temp_header_bytes.clone());
+                        let header_bytes = temp_header_bytes.clone();
+                        if let Some(_method) = header_map.get("Method") {
+                            println!("4");
+                            let (key, value) = handle_header_bytes(header_bytes);
+                            header_map.insert(key, value);
+                        } else {
+                            println!("5");
+                            let (method, full_path, version) =
+                                handle_request_line_bytes(header_bytes);
+                            header_map.insert("Method".to_string(), method);
+                            header_map.insert("FullPath".to_string(), full_path);
+                            header_map.insert("Version".to_string(), version);
+                        }
                         temp_header_bytes.clear();
                     }
                     point_index = index + 1;
@@ -90,5 +166,5 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>
             break;
         }
     }
-    Ok((headers_bytes, body_bytes))
+    Ok((header_map, body_bytes))
 }

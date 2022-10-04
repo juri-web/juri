@@ -17,6 +17,7 @@ impl JuriPlugin for MyPlugin {
 
 fn main() {
     let mut router = Juri::new();
+    router.thread_size = 1;
     router.add_plugin(Box::new(MyPlugin {}));
 
     router.get("/", api::views::handle_index);

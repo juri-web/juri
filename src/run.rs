@@ -13,7 +13,7 @@ use std::sync::Arc;
 pub struct Juri {
     plugins: Vec<Box<dyn JuriPlugin>>,
     router: Router,
-    thread_size: usize,
+    pub thread_size: usize,
     response_404: fn(request: Request) -> Response,
     response_500: fn(request: Request) -> Response,
 }
@@ -67,8 +67,8 @@ impl Juri {
             let router = Arc::clone(&router);
             let plugins = Arc::clone(&plugins);
             pool.execute(move || match handle_bytes(&mut stream) {
-                Ok((headers_bytes, body_bytes)) => {
-                    let mut request = Request::new(headers_bytes, body_bytes);
+                Ok((header_map, body_bytes)) => {
+                    let mut request = Request::new(header_map, body_bytes);
                     let method = request.method.clone();
                     let path = request.path.clone();
                     println!("{}: Request {} {}", "INFO".green(), method, path);

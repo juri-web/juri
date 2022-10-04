@@ -14,46 +14,26 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(headers_bytes: Vec<Vec<u8>>, body_bytes: Vec<u8>) -> Self {
+    pub fn new(header_map: HashMap<String, String>, body_bytes: Vec<u8>) -> Self {
         let mut request = Request {
             method: "GET".to_string(),
             full_path: "full_path".to_string(),
             path: "".to_string(),
-            header_map: HashMap::new(),
+            header_map,
             params_map: HashMap::new(),
             query_str: "".to_string(),
             hash: "".to_string(),
             body_bytes,
         };
+        println!("{:#?}", request.header_map);
+        request.method = request.header_map.get("Method").unwrap().to_string();
+        request.full_path = request.header_map.get("FullPath").unwrap().to_string();
 
-        for (index, value) in headers_bytes.iter().enumerate() {
-            let header = String::from_utf8(value.to_vec()).unwrap();
-            if index == 0 {
-                let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
-                let caps = re.captures(&header).unwrap();
-                request.method = caps
-                    .get(1)
-                    .map_or("".to_string(), |m| m.as_str().to_string());
-                request.full_path = caps
-                    .get(2)
-                    .map_or("".to_string(), |m| m.as_str().to_string());
+        let (path, query_str, hash) = handle_full_path(&request.full_path);
+        request.path = path;
+        request.query_str = query_str;
+        request.hash = hash;
 
-                let (path, query_str, hash) = handle_full_path(&request.full_path);
-                request.path = path;
-                request.query_str = query_str;
-                request.hash = hash;
-            } else {
-                let re = Regex::new(r"^(.*?):(.*?)$").unwrap();
-                let caps = re.captures(&header).unwrap();
-                let key = caps
-                    .get(1)
-                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
-                let value = caps
-                    .get(2)
-                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
-                request.header_map.insert(key, value);
-            }
-        }
         request
     }
 
