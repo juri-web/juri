@@ -71,7 +71,14 @@ impl Juri {
                     let mut request = Request::new(header_map, body_bytes);
                     let method = request.method.clone();
                     let path = request.path.clone();
-                    println!("{}: Request {} {}", "INFO".green(), method, path);
+                    let peer_addr = stream.peer_addr().unwrap().ip();
+                    println!(
+                        "{}: Request {} {} IP-{}",
+                        "INFO".green(),
+                        method,
+                        path,
+                        peer_addr
+                    );
 
                     let mut plugin = plugins.iter();
                     let plugin_response = loop {
@@ -86,9 +93,7 @@ impl Juri {
                         }
                     };
                     let mut response = match plugin_response {
-                        Some(response) => {
-                           response
-                        }
+                        Some(response) => response,
                         None => {
                             match handle_router(&mut request, router) {
                                 Some(fun) => {
@@ -108,9 +113,9 @@ impl Juri {
                                 }
                                 None => (self.response_404)(request),
                             }
-                        },
+                        }
                     };
-            
+
                     for plugin in plugins.iter() {
                         plugin.response(&mut response);
                     }
@@ -125,7 +130,7 @@ impl Juri {
                     stream.write(response_str.as_bytes()).unwrap();
                     stream.flush().unwrap();
                 }
-                Err(e) => println!("{}: {:?}", "Juri".green(), e),
+                Err(e) => println!("{}: {:?}", "ERROR".red(), e),
             });
         }
     }

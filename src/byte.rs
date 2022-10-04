@@ -1,14 +1,9 @@
-use std::{
-    collections::HashMap,
-    io::{self, Read},
-    net::TcpStream,
-};
-
+use crate::JuriCustomError;
 use regex::Regex;
+use std::{collections::HashMap, io::Read, net::TcpStream};
 
 fn handle_request_line_bytes(line_bytes: Vec<u8>) -> (String, String, String) {
     let line = String::from_utf8(line_bytes).unwrap();
-    println!("line {}", line);
     let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
     let caps = re.captures(&line).unwrap();
     let method = caps
@@ -25,7 +20,6 @@ fn handle_request_line_bytes(line_bytes: Vec<u8>) -> (String, String, String) {
 
 fn handle_header_bytes(header_bytes: Vec<u8>) -> (String, String) {
     let header = String::from_utf8(header_bytes).unwrap();
-    println!("header {}", header);
     let re = Regex::new(r"^(.*?):(.*?)$").unwrap();
     let caps = re.captures(&header).unwrap();
     let key = caps
@@ -37,7 +31,9 @@ fn handle_header_bytes(header_bytes: Vec<u8>) -> (String, String) {
     (key, value)
 }
 
-pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(HashMap<String, String>, Vec<u8>)> {
+pub fn handle_bytes(
+    stream: &mut TcpStream,
+) -> Result<(HashMap<String, String>, Vec<u8>), JuriCustomError> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
     let mut header_map = HashMap::<String, String>::new();
@@ -45,11 +41,12 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(HashMap<String, Strin
     let mut temp_header_bytes = Vec::<u8>::new();
     let mut flag_body = false;
     const BUFFER_SIZE: usize = 1024 * 2;
-    println!("--------------#####，{:#?}", stream);
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
-        let bytes_count = stream.read(&mut buffer)?;
-        println!("--------------");
+        let bytes_count = stream.read(&mut buffer).map_err(|e| JuriCustomError {
+            code: 500,
+            reason: e.to_string(),
+        })?;
         if bytes_count == 0 {
             break;
         } else if flag_body {
@@ -71,16 +68,13 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(HashMap<String, Strin
                         break;
                     } else {
                         // * * * * 13 / 10 * * * *
-                        println!("1");
                         let header_bytes = temp_header_bytes[..temp_header_bytes.len() - 1]
                             .to_vec()
                             .clone();
                         if let Some(_method) = header_map.get("Method") {
-                            println!("4");
                             let (key, value) = handle_header_bytes(header_bytes);
                             header_map.insert(key, value);
                         } else {
-                            println!("5");
                             let (method, full_path, version) =
                                 handle_request_line_bytes(header_bytes);
                             header_map.insert("Method".to_string(), method);
@@ -115,14 +109,11 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(HashMap<String, Strin
                         break;
                     } else if temp_header_bytes.len() == 0 {
                         // * * * * 13 10 * * * *
-                        println!("2");
                         let header_bytes = buffer[point_index..(index - 1)].to_vec().clone();
                         if let Some(_method) = header_map.get("Method") {
-                            println!("4");
                             let (key, value) = handle_header_bytes(header_bytes);
                             header_map.insert(key, value);
                         } else {
-                            println!("5");
                             let (method, full_path, version) =
                                 handle_request_line_bytes(header_bytes);
                             header_map.insert("Method".to_string(), method);
@@ -131,16 +122,13 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(HashMap<String, Strin
                         }
                     } else {
                         // * * / * * 13 10 * * * *
-                        println!("3");
                         temp_header_bytes
                             .append(&mut buffer[point_index..(index - 1)].to_vec().clone());
                         let header_bytes = temp_header_bytes.clone();
                         if let Some(_method) = header_map.get("Method") {
-                            println!("4");
                             let (key, value) = handle_header_bytes(header_bytes);
                             header_map.insert(key, value);
                         } else {
-                            println!("5");
                             let (method, full_path, version) =
                                 handle_request_line_bytes(header_bytes);
                             header_map.insert("Method".to_string(), method);
@@ -165,6 +153,13 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(HashMap<String, Strin
         if bytes_count < BUFFER_SIZE {
             break;
         }
+    }
+
+    if let None = header_map.get("Method") {
+        return Err(JuriCustomError {
+            code: 400,
+            reason: "请求方法错误".to_string(),
+        });
     }
     Ok((header_map, body_bytes))
 }

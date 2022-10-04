@@ -25,7 +25,6 @@ impl Request {
             hash: "".to_string(),
             body_bytes,
         };
-        println!("{:#?}", request.header_map);
         request.method = request.header_map.get("Method").unwrap().to_string();
         request.full_path = request.header_map.get("FullPath").unwrap().to_string();
 
