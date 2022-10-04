@@ -67,13 +67,12 @@ impl Juri {
             let router = Arc::clone(&router);
             let plugins = Arc::clone(&plugins);
             pool.execute(move || match handle_bytes(&mut stream) {
-                Ok((header_map, body_bytes)) => {
-                    let mut request = Request::new(header_map, body_bytes);
+                Ok(mut request) => {
                     let method = request.method.clone();
                     let path = request.path.clone();
                     let peer_addr = stream.peer_addr().unwrap().ip();
                     println!(
-                        "{}: Request {} {} IP-{}",
+                        "{}: Request {} {} IP{}",
                         "INFO".green(),
                         method,
                         path,

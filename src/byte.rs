@@ -1,6 +1,6 @@
-use crate::JuriCustomError;
+use crate::{JuriCustomError, Request};
 use regex::Regex;
-use std::{collections::HashMap, io::Read, net::TcpStream};
+use std::{io::Read, net::TcpStream};
 
 fn handle_request_line_bytes(line_bytes: Vec<u8>) -> (String, String, String) {
     let line = String::from_utf8(line_bytes).unwrap();
@@ -31,16 +31,15 @@ fn handle_header_bytes(header_bytes: Vec<u8>) -> (String, String) {
     (key, value)
 }
 
-pub fn handle_bytes(
-    stream: &mut TcpStream,
-) -> Result<(HashMap<String, String>, Vec<u8>), JuriCustomError> {
+pub fn handle_bytes(stream: &mut TcpStream) -> Result<Request, JuriCustomError> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
-    let mut header_map = HashMap::<String, String>::new();
-    let mut body_bytes = Vec::<u8>::new();
     let mut temp_header_bytes = Vec::<u8>::new();
     let mut flag_body = false;
+    let mut flag_request_line = false;
     const BUFFER_SIZE: usize = 1024 * 2;
+
+    let mut request = Request::new();
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
         let bytes_count = stream.read(&mut buffer).map_err(|e| JuriCustomError {
@@ -50,7 +49,9 @@ pub fn handle_bytes(
         if bytes_count == 0 {
             break;
         } else if flag_body {
-            body_bytes.append(&mut buffer[..bytes_count].to_vec());
+            request
+                .body_bytes
+                .append(&mut buffer[..bytes_count].to_vec());
         } else {
             let mut flag_n = false;
             let mut flag_r = false;
@@ -63,7 +64,9 @@ pub fn handle_bytes(
                 {
                     if temp_header_bytes.len() == 1 {
                         // 13 / 10 * * * *
-                        body_bytes.append(&mut buffer[(index + 1)..bytes_count].to_vec());
+                        request
+                            .body_bytes
+                            .append(&mut buffer[(index + 1)..bytes_count].to_vec());
                         flag_body = true;
                         break;
                     } else {
@@ -71,15 +74,16 @@ pub fn handle_bytes(
                         let header_bytes = temp_header_bytes[..temp_header_bytes.len() - 1]
                             .to_vec()
                             .clone();
-                        if let Some(_method) = header_map.get("Method") {
+                        if flag_request_line {
                             let (key, value) = handle_header_bytes(header_bytes);
-                            header_map.insert(key, value);
+                            request.header_map.insert(key, value);
                         } else {
                             let (method, full_path, version) =
                                 handle_request_line_bytes(header_bytes);
-                            header_map.insert("Method".to_string(), method);
-                            header_map.insert("FullPath".to_string(), full_path);
-                            header_map.insert("Version".to_string(), version);
+                            request.method = method;
+                            request.set_full_path(full_path);
+                            request.version = version;
+                            flag_request_line = true
                         }
                         temp_header_bytes.clear();
                         point_index = index + 1;
@@ -103,37 +107,41 @@ pub fn handle_bytes(
                             break;
                         }
                         // * * / * * 13 10 * * * * or 13 10 * * * *
-                        body_bytes.append(&mut buffer[(index + 1)..bytes_count].to_vec());
+                        request
+                            .body_bytes
+                            .append(&mut buffer[(index + 1)..bytes_count].to_vec());
 
                         flag_body = true;
                         break;
                     } else if temp_header_bytes.len() == 0 {
                         // * * * * 13 10 * * * *
                         let header_bytes = buffer[point_index..(index - 1)].to_vec().clone();
-                        if let Some(_method) = header_map.get("Method") {
+                        if flag_request_line {
                             let (key, value) = handle_header_bytes(header_bytes);
-                            header_map.insert(key, value);
+                            request.header_map.insert(key, value);
                         } else {
                             let (method, full_path, version) =
                                 handle_request_line_bytes(header_bytes);
-                            header_map.insert("Method".to_string(), method);
-                            header_map.insert("FullPath".to_string(), full_path);
-                            header_map.insert("Version".to_string(), version);
+                            request.method = method;
+                            request.set_full_path(full_path);
+                            request.version = version;
+                            flag_request_line = true
                         }
                     } else {
                         // * * / * * 13 10 * * * *
                         temp_header_bytes
                             .append(&mut buffer[point_index..(index - 1)].to_vec().clone());
                         let header_bytes = temp_header_bytes.clone();
-                        if let Some(_method) = header_map.get("Method") {
+                        if flag_request_line {
                             let (key, value) = handle_header_bytes(header_bytes);
-                            header_map.insert(key, value);
+                            request.header_map.insert(key, value);
                         } else {
                             let (method, full_path, version) =
                                 handle_request_line_bytes(header_bytes);
-                            header_map.insert("Method".to_string(), method);
-                            header_map.insert("FullPath".to_string(), full_path);
-                            header_map.insert("Version".to_string(), version);
+                            request.method = method;
+                            request.set_full_path(full_path);
+                            request.version = version;
+                            flag_request_line = true
                         }
                         temp_header_bytes.clear();
                     }
@@ -155,11 +163,11 @@ pub fn handle_bytes(
         }
     }
 
-    if let None = header_map.get("Method") {
+    if flag_request_line == false {
         return Err(JuriCustomError {
             code: 400,
             reason: "请求方法错误".to_string(),
         });
     }
-    Ok((header_map, body_bytes))
+    Ok(request)
 }

@@ -5,6 +5,7 @@ use std::collections::HashMap;
 pub struct Request {
     pub method: String,
     pub full_path: String,
+    pub version: String,
     pub path: String,
     pub header_map: HashMap<String, String>,
     pub params_map: HashMap<String, String>,
@@ -14,26 +15,25 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(header_map: HashMap<String, String>, body_bytes: Vec<u8>) -> Self {
-        let mut request = Request {
-            method: "GET".to_string(),
-            full_path: "full_path".to_string(),
+    pub fn new() -> Self {
+        Request {
+            method: "".to_string(),
+            full_path: "".to_string(),
+            version: "".to_string(),
             path: "".to_string(),
-            header_map,
+            header_map: HashMap::new(),
             params_map: HashMap::new(),
             query_str: "".to_string(),
             hash: "".to_string(),
-            body_bytes,
-        };
-        request.method = request.header_map.get("Method").unwrap().to_string();
-        request.full_path = request.header_map.get("FullPath").unwrap().to_string();
+            body_bytes: Vec::<u8>::new(),
+        }
+    }
 
-        let (path, query_str, hash) = handle_full_path(&request.full_path);
-        request.path = path;
-        request.query_str = query_str;
-        request.hash = hash;
-
-        request
+    pub fn set_full_path(&mut self, full_path: String) {
+        let (path, query_str, hash) = handle_full_path(full_path);
+        self.path = path;
+        self.query_str = query_str;
+        self.hash = hash;
     }
 
     pub fn query(&self, key: &str) -> Option<String> {
@@ -81,7 +81,7 @@ impl Request {
     }
 }
 
-fn handle_full_path(full_path: &String) -> (String, String, String) {
+fn handle_full_path(full_path: String) -> (String, String, String) {
     let re = Regex::new(r"^(.*?)(\?.*?)?(#.*?)?$").unwrap();
     let caps = re.captures(&full_path).unwrap();
     let path = caps
