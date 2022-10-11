@@ -3,6 +3,7 @@ use crate::error::JuriError;
 use crate::plugin::handle_fn;
 use crate::router::{conversion_router, handle_router, HandleFn, Router};
 use crate::thread::ThreadPool;
+use crate::cache::main::init_cache;
 use crate::{JuriPlugin, Request, Response, ResultResponse};
 use colored::*;
 use std::collections::HashMap;
@@ -55,6 +56,7 @@ impl Juri {
         }
     }
     pub fn run(self, addr: &str) {
+        init_cache();
         let listener = TcpListener::bind(addr).unwrap();
         println!("{}: listener port http://{} start", "Juri".green(), addr);
         let pool = ThreadPool::new(self.thread_size);
@@ -72,7 +74,7 @@ impl Juri {
                     let path = request.path.clone();
                     let peer_addr = stream.peer_addr().unwrap().ip();
                     println!(
-                        "{}: Request {} {} IP{}",
+                        "{}: Request {} {} {}",
                         "INFO".green(),
                         method,
                         path,

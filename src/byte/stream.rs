@@ -35,7 +35,7 @@ pub struct JuriStream {
     request_line: Option<(String, String, String)>,
     header_map: HashMap<String, String>,
     body_bytes: Vec<u8>,
-    boundary: Option<String>,
+    multipart_form_data: Option<MultipartFormData>,
 }
 
 impl JuriStream {
@@ -43,8 +43,8 @@ impl JuriStream {
         JuriStream {
             request_line: None,
             header_map: HashMap::new(),
-            boundary: None,
             body_bytes: vec![],
+            multipart_form_data: None,
         }
     }
 
@@ -58,8 +58,8 @@ impl JuriStream {
     }
 
     pub fn handle_request_body_bytes(&mut self, body_bytes: &mut Vec<u8>) {
-        if self.boundary.is_some() {
-            self.handle_multipart_form_data(body_bytes);
+        if let Some(multipart_form_data) = self.multipart_form_data.as_mut() {
+            multipart_form_data.handle_bytes(body_bytes);
         } else {
             self.body_bytes.append(body_bytes);
         }
@@ -96,15 +96,95 @@ impl JuriStream {
             let re = Regex::new(r"^multipart/form-data; boundary=(.*?)$").unwrap();
             if let Some(caps) = re.captures(&content_type) {
                 if let Some(boundary) = caps.get(1).map(|m| m.as_str()) {
-                    self.boundary = Some(boundary.to_string());
+                    self.multipart_form_data = Some(MultipartFormData {
+                        boundary: boundary.to_string(),
+                        form_data_vec: vec![],
+                        body_bytes: vec![],
+                        temp_form_data: None,
+                    });
                     return true;
                 }
             }
         }
         false
     }
+}
 
-    pub fn handle_multipart_form_data(&mut self, _body_bytes: &mut Vec<u8>) {
-        // multipart/form-data
+struct MultipartFormData {
+    boundary: String,
+    form_data_vec: Vec<FormData>,
+    body_bytes: Vec<u8>,
+    temp_form_data: Option<FormData>,
+}
+
+impl MultipartFormData {
+    pub fn handle_bytes(&mut self, body_bytes: &mut Vec<u8>) {
+        let boundary_start_vec = format!("--{}", self.boundary).as_bytes().to_vec();
+        let boundary_end_vec = format!("--{}--", self.boundary).as_bytes().to_vec();
+
+        let mut flag_n = false; // 10
+        let mut flag_r = false; // 13
+        let mut point_index: usize = 0;
+        println!("----");
+        for (index, byte) in body_bytes.iter().enumerate() {
+            if flag_r {
+                if *byte == 10 {
+                    flag_n = true;
+                } else {
+                    flag_r = false;
+                }
+            }
+
+            if *byte == 13 {
+                flag_r = true;
+            }
+            
+            if flag_n && flag_r {
+                let bytes = body_bytes[point_index..(index - 1)].to_vec();
+                println!("n r {:#?}", String::from_utf8(bytes.clone()));
+                if let Some(temp_form_data) = self.temp_form_data.as_mut() {
+                    if temp_form_data.cache_file_name.is_empty() {
+
+                    } else {
+
+                    }
+                }
+                if is_vec_equals(&boundary_start_vec, &bytes) {
+                    println!("boundary_end_vec 1");
+                    self.temp_form_data = Some(FormData {
+                        name: "".to_string(),
+                        file_name: None,
+                        content_type: None,
+                        cache_file_name: "".to_owned(),
+                    });
+                    point_index = index + 1;
+                } else if is_vec_equals(&boundary_end_vec, &bytes) {
+                    println!("boundary_end_vec");
+                    break;
+                }
+            }
+        }
     }
+}
+
+struct FormData {
+    name: String,
+    file_name: Option<String>,
+    content_type: Option<String>,
+
+    cache_file_name: String,
+}
+
+fn is_vec_equals<T: std::cmp::PartialEq>(vec1: &Vec<T>, vec2: &Vec<T>) -> bool {
+    if vec1.len() != vec2.len() {
+        return false;
+    }
+
+    for i in 0..vec1.len() {
+        if vec1[i] != vec2[i] {
+            return false;
+        }
+    }
+
+    return true;
 }

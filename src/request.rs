@@ -30,7 +30,8 @@ impl Request {
     }
 
     pub fn set_full_path(&mut self, full_path: String) {
-        let (path, query_str, hash) = handle_full_path(full_path);
+        self.full_path = full_path;
+        let (path, query_str, hash) = handle_full_path(self.full_path.clone());
         self.path = path;
         self.query_str = query_str;
         self.hash = hash;
@@ -76,8 +77,6 @@ impl Request {
     }
 
     pub fn form_data(self) {
-        let body = String::from_utf8(self.body_bytes.to_vec()).unwrap();
-        println!("{:?} {} {:?}", self.header_map, self.body_bytes.len(), body);
     }
 }
 
