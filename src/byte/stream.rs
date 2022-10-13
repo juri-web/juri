@@ -144,7 +144,7 @@ impl MultipartFormData {
             }
 
             if flag_n && flag_r {
-                let bytes = body_bytes[point_index..(index - 1)].to_vec();
+                let mut bytes = body_bytes[point_index..(index - 1)].to_vec();
                 if is_vec_equals(&boundary_start_vec, &bytes) {
                     if let Some(temp_form_data) = self.temp_form_data.as_mut() {
                         self.form_data_vec.push(temp_form_data.clone());
@@ -172,7 +172,7 @@ impl MultipartFormData {
                     point_index = index + 1;
                     break;
                 } else if let Some(temp_form_data) = self.temp_form_data.as_mut() {
-                    if bytes.len() == 0 {
+                    if bytes.len() == 0 && temp_form_data.cache_file_name.is_empty() {
                         let mut s = DefaultHasher::new();
                         temp_form_data.hash(&mut s);
                         temp_form_data.cache_file_name = s.finish().to_string();
@@ -217,13 +217,18 @@ impl MultipartFormData {
                             cache_file_path.join(temp_form_data.cache_file_name.clone());
 
                         let mut file;
-                        if let Ok(temp_file) =
-                            OpenOptions::new().append(true).open(file_path.clone())
-                        {
-                            file = temp_file;
-                        } else {
-                            file = fs::File::create(file_path).unwrap();
+                        match OpenOptions::new().append(true).open(file_path.clone()) {
+                            Ok(temp_file) => {
+                                file = temp_file;
+                            }
+                            Err(_e) => {
+                                // println!("1 {:#?} {:#?}", e, file_path.clone());
+                                file = fs::File::create(file_path).unwrap();
+                            }
                         }
+
+                        bytes.push(13);
+                        bytes.push(10);
                         file.write(&bytes).unwrap();
                     }
                     point_index = index + 1;
@@ -240,10 +245,14 @@ impl MultipartFormData {
 
                 let file_path = cache_file_path.join(temp_form_data.cache_file_name.clone());
                 let mut file;
-                if let Ok(temp_file) = OpenOptions::new().append(true).open(file_path.clone()) {
-                    file = temp_file;
-                } else {
-                    file = fs::File::create(file_path).unwrap();
+                match OpenOptions::new().append(true).open(file_path.clone()) {
+                    Ok(temp_file) => {
+                        file = temp_file;
+                    }
+                    Err(_e) => {
+                        // println!("{:#?} {:#?}", e, file_path.clone());
+                        file = fs::File::create(file_path).unwrap();
+                    }
                 }
 
                 file.write(&bytes).unwrap();
