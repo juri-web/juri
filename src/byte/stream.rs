@@ -2,7 +2,7 @@ use crate::{cache::main::get_cache_file_path, JuriCustomError, Request};
 use regex::Regex;
 use std::{
     collections::{hash_map::DefaultHasher, HashMap},
-    fs::OpenOptions,
+    fs::{self, OpenOptions},
     hash::{Hash, Hasher},
     io::Write,
     time::{SystemTime, UNIX_EPOCH},
@@ -145,33 +145,7 @@ impl MultipartFormData {
 
             if flag_n && flag_r {
                 let bytes = body_bytes[point_index..(index - 1)].to_vec();
-                // println!("n r {:#?}", String::from_utf8(bytes.clone()));
-                if let Some(temp_form_data) = self.temp_form_data.as_mut() {
-                    if bytes.len() == 0 {
-                        let mut s = DefaultHasher::new();
-                        temp_form_data.hash(&mut s);
-                        temp_form_data.cache_file_name = s.finish().to_string();
-                    } else if temp_form_data.cache_file_name.is_empty() {
-                        let (key, value) = handle_header_bytes(bytes);
-                        if key == "Content-Disposition" {
-                        } else if key == "Content-Type" {
-                            temp_form_data.content_type = Some(value);
-                        }
-                    } else {
-                        let file_path =
-                            cache_file_path.join(temp_form_data.cache_file_name.clone());
-                        let mut file = OpenOptions::new()
-                            .read(true)
-                            .write(true)
-                            .open(file_path)
-                            .unwrap();
-
-                        file.write(&bytes).unwrap();
-                    }
-                    continue;
-                }
                 if is_vec_equals(&boundary_start_vec, &bytes) {
-                    println!("boundary_end_vec 1");
                     if let Some(temp_form_data) = self.temp_form_data.as_mut() {
                         self.form_data_vec.push(temp_form_data.clone());
                         self.temp_form_data = None;
@@ -191,9 +165,73 @@ impl MultipartFormData {
                     });
                     point_index = index + 1;
                 } else if is_vec_equals(&boundary_end_vec, &bytes) {
-                    println!("boundary_end_vec");
+                    if let Some(temp_form_data) = self.temp_form_data.as_mut() {
+                        self.form_data_vec.push(temp_form_data.clone());
+                        self.temp_form_data = None;
+                    }
+                    point_index = index + 1;
                     break;
+                } else if let Some(temp_form_data) = self.temp_form_data.as_mut() {
+                    if bytes.len() == 0 {
+                        let mut s = DefaultHasher::new();
+                        temp_form_data.hash(&mut s);
+                        temp_form_data.cache_file_name = s.finish().to_string();
+                    } else if temp_form_data.cache_file_name.is_empty() {
+                        let (key, value) = handle_header_bytes(bytes);
+                        if key == "Content-Disposition" {
+                            let mut str_split = value.split(";");
+                            str_split.next();
+                            if let Some(name_str) = str_split.next() {
+                                let name_str = name_str.trim();
+                                let re = Regex::new("^(.*?)=\"(.*?)\"$").unwrap();
+                                let caps = re.captures(&name_str).unwrap();
+                                let key = caps
+                                    .get(1)
+                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                                let value = caps
+                                    .get(2)
+                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                                if key == "name" {
+                                    temp_form_data.name = value.trim().to_string();
+                                }
+                            }
+                            if let Some(file_name_str) = str_split.next() {
+                                let file_name_str = file_name_str.trim();
+                                let re = Regex::new("^(.*?)=\"(.*?)\"$").unwrap();
+                                let caps = re.captures(&file_name_str).unwrap();
+                                let key = caps
+                                    .get(1)
+                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                                let value = caps
+                                    .get(2)
+                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                                if key == "filename" {
+                                    temp_form_data.file_name = Some(value.trim().to_string());
+                                }
+                            }
+                        } else if key == "Content-Type" {
+                            temp_form_data.content_type = Some(value);
+                        }
+                    } else {
+                        let file_path =
+                            cache_file_path.join(temp_form_data.cache_file_name.clone());
+
+                        let mut file;
+                        if let Ok(temp_file) =
+                            OpenOptions::new().append(true).open(file_path.clone())
+                        {
+                            file = temp_file;
+                        } else {
+                            file = fs::File::create(file_path).unwrap();
+                        }
+                        file.write(&bytes).unwrap();
+                    }
+                    point_index = index + 1;
+                } else {
+                    println!("Error---------------------------------------------------");
                 }
+                flag_n = false;
+                flag_r = false;
             }
         }
         if point_index < body_bytes.len() {
@@ -201,11 +239,12 @@ impl MultipartFormData {
                 let bytes = body_bytes[point_index..].to_vec();
 
                 let file_path = cache_file_path.join(temp_form_data.cache_file_name.clone());
-                let mut file = OpenOptions::new()
-                    .read(true)
-                    .write(true)
-                    .open(file_path)
-                    .unwrap();
+                let mut file;
+                if let Ok(temp_file) = OpenOptions::new().append(true).open(file_path.clone()) {
+                    file = temp_file;
+                } else {
+                    file = fs::File::create(file_path).unwrap();
+                }
 
                 file.write(&bytes).unwrap();
             }
