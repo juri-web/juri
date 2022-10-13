@@ -1,6 +1,12 @@
-use crate::{JuriCustomError, Request};
+use crate::{cache::main::get_cache_file_path, JuriCustomError, Request};
 use regex::Regex;
-use std::collections::HashMap;
+use std::{
+    collections::{hash_map::DefaultHasher, HashMap},
+    fs::OpenOptions,
+    hash::{Hash, Hasher},
+    io::Write,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 fn handle_request_line_bytes(line_bytes: Vec<u8>) -> (String, String, String) {
     let line = String::from_utf8(line_bytes).unwrap();
@@ -99,7 +105,6 @@ impl JuriStream {
                     self.multipart_form_data = Some(MultipartFormData {
                         boundary: boundary.to_string(),
                         form_data_vec: vec![],
-                        body_bytes: vec![],
                         temp_form_data: None,
                     });
                     return true;
@@ -113,7 +118,6 @@ impl JuriStream {
 struct MultipartFormData {
     boundary: String,
     form_data_vec: Vec<FormData>,
-    body_bytes: Vec<u8>,
     temp_form_data: Option<FormData>,
 }
 
@@ -121,11 +125,11 @@ impl MultipartFormData {
     pub fn handle_bytes(&mut self, body_bytes: &mut Vec<u8>) {
         let boundary_start_vec = format!("--{}", self.boundary).as_bytes().to_vec();
         let boundary_end_vec = format!("--{}--", self.boundary).as_bytes().to_vec();
+        let cache_file_path = get_cache_file_path();
 
         let mut flag_n = false; // 10
         let mut flag_r = false; // 13
         let mut point_index: usize = 0;
-        println!("----");
         for (index, byte) in body_bytes.iter().enumerate() {
             if flag_r {
                 if *byte == 10 {
@@ -138,24 +142,52 @@ impl MultipartFormData {
             if *byte == 13 {
                 flag_r = true;
             }
-            
+
             if flag_n && flag_r {
                 let bytes = body_bytes[point_index..(index - 1)].to_vec();
-                println!("n r {:#?}", String::from_utf8(bytes.clone()));
+                // println!("n r {:#?}", String::from_utf8(bytes.clone()));
                 if let Some(temp_form_data) = self.temp_form_data.as_mut() {
-                    if temp_form_data.cache_file_name.is_empty() {
-
+                    if bytes.len() == 0 {
+                        let mut s = DefaultHasher::new();
+                        temp_form_data.hash(&mut s);
+                        temp_form_data.cache_file_name = s.finish().to_string();
+                    } else if temp_form_data.cache_file_name.is_empty() {
+                        let (key, value) = handle_header_bytes(bytes);
+                        if key == "Content-Disposition" {
+                        } else if key == "Content-Type" {
+                            temp_form_data.content_type = Some(value);
+                        }
                     } else {
+                        let file_path =
+                            cache_file_path.join(temp_form_data.cache_file_name.clone());
+                        let mut file = OpenOptions::new()
+                            .read(true)
+                            .write(true)
+                            .open(file_path)
+                            .unwrap();
 
+                        file.write(&bytes).unwrap();
                     }
+                    continue;
                 }
                 if is_vec_equals(&boundary_start_vec, &bytes) {
                     println!("boundary_end_vec 1");
+                    if let Some(temp_form_data) = self.temp_form_data.as_mut() {
+                        self.form_data_vec.push(temp_form_data.clone());
+                        self.temp_form_data = None;
+                    }
+
+                    let unix = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("get_current_unix_err");
                     self.temp_form_data = Some(FormData {
                         name: "".to_string(),
                         file_name: None,
                         content_type: None,
                         cache_file_name: "".to_owned(),
+
+                        _create_time_seconds: unix.as_secs(),
+                        _create_time_nanosecond: unix.subsec_nanos(),
                     });
                     point_index = index + 1;
                 } else if is_vec_equals(&boundary_end_vec, &bytes) {
@@ -164,13 +196,30 @@ impl MultipartFormData {
                 }
             }
         }
+        if point_index < body_bytes.len() {
+            if let Some(temp_form_data) = self.temp_form_data.as_mut() {
+                let bytes = body_bytes[point_index..].to_vec();
+
+                let file_path = cache_file_path.join(temp_form_data.cache_file_name.clone());
+                let mut file = OpenOptions::new()
+                    .read(true)
+                    .write(true)
+                    .open(file_path)
+                    .unwrap();
+
+                file.write(&bytes).unwrap();
+            }
+        }
     }
 }
 
+#[derive(Hash, Clone)]
 struct FormData {
     name: String,
     file_name: Option<String>,
     content_type: Option<String>,
+    _create_time_seconds: u64,
+    _create_time_nanosecond: u32,
 
     cache_file_name: String,
 }
