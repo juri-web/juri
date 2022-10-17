@@ -91,6 +91,9 @@ impl JuriStream {
         request.header_map = self.header_map;
 
         request.body_bytes = self.body_bytes;
+        if let Some(multipart_form_data) = self.multipart_form_data {
+            request.multipart_form_data  = multipart_form_data.form_data_vec;
+        }
 
         Ok(request)
     }
@@ -262,10 +265,10 @@ impl MultipartFormData {
 }
 
 #[derive(Hash, Clone)]
-struct FormData {
-    name: String,
-    file_name: Option<String>,
-    content_type: Option<String>,
+pub struct FormData {
+    pub name: String,
+    pub file_name: Option<String>,
+    pub content_type: Option<String>,
     _create_time_seconds: u64,
     _create_time_nanosecond: u32,
 

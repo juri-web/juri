@@ -1,3 +1,4 @@
+use crate::byte::FormData;
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -12,6 +13,7 @@ pub struct Request {
     query_str: String,
     pub hash: String,
     pub body_bytes: Vec<u8>,
+    pub multipart_form_data: Vec<FormData>,
 }
 
 impl Request {
@@ -26,6 +28,7 @@ impl Request {
             query_str: "".to_string(),
             hash: "".to_string(),
             body_bytes: Vec::<u8>::new(),
+            multipart_form_data: vec![],
         }
     }
 
@@ -76,7 +79,23 @@ impl Request {
         None
     }
 
-    pub fn form_data(self) {
+    pub fn file(self, name: &str) -> Option<FormData> {
+        for form_data in self.multipart_form_data {
+            if form_data.name == name {
+                return Some(form_data);
+            }
+        }
+        None
+    }
+
+    pub fn files(self, name: &str) -> Vec<FormData> {
+        let mut form_data_list = vec![];
+        for form_data in self.multipart_form_data {
+            if form_data.name == name {
+                form_data_list.push(form_data);
+            }
+        }
+        form_data_list
     }
 }
 
