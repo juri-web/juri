@@ -1,3 +1,4 @@
+use crate::byte::FormData;
 use regex::Regex;
 use std::collections::HashMap;
 
@@ -5,56 +6,38 @@ use std::collections::HashMap;
 pub struct Request {
     pub method: String,
     pub full_path: String,
+    pub version: String,
     pub path: String,
     pub header_map: HashMap<String, String>,
     pub params_map: HashMap<String, String>,
     query_str: String,
     pub hash: String,
     pub body_bytes: Vec<u8>,
+    pub multipart_form_data: Vec<FormData>,
 }
 
 impl Request {
-    pub fn new(headers_bytes: Vec<Vec<u8>>, body_bytes: Vec<u8>) -> Self {
-        let mut request = Request {
-            method: "GET".to_string(),
-            full_path: "full_path".to_string(),
+    pub fn new() -> Self {
+        Request {
+            method: "".to_string(),
+            full_path: "".to_string(),
+            version: "".to_string(),
             path: "".to_string(),
             header_map: HashMap::new(),
             params_map: HashMap::new(),
             query_str: "".to_string(),
             hash: "".to_string(),
-            body_bytes,
-        };
-
-        for (index, value) in headers_bytes.iter().enumerate() {
-            let header = String::from_utf8(value.to_vec()).unwrap();
-            if index == 0 {
-                let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
-                let caps = re.captures(&header).unwrap();
-                request.method = caps
-                    .get(1)
-                    .map_or("".to_string(), |m| m.as_str().to_string());
-                request.full_path = caps
-                    .get(2)
-                    .map_or("".to_string(), |m| m.as_str().to_string());
-
-                let (path, query_str, hash) = handle_full_path(&request.full_path);
-                request.path = path;
-                request.query_str = query_str;
-                request.hash = hash;
-            } else {
-                let re = Regex::new(r"^(.*?):(.*?)$").unwrap();
-                let caps = re.captures(&header).unwrap();
-                let key = caps
-                    .get(1)
-                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
-                let value = caps
-                    .get(2)
-                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
-                request.header_map.insert(key, value);
-            }
+            body_bytes: Vec::<u8>::new(),
+            multipart_form_data: vec![],
         }
-        request
+    }
+
+    pub fn set_full_path(&mut self, full_path: String) {
+        self.full_path = full_path;
+        let (path, query_str, hash) = handle_full_path(self.full_path.clone());
+        self.path = path;
+        self.query_str = query_str;
+        self.hash = hash;
     }
 
     pub fn query(&self, key: &str) -> Option<String> {
@@ -96,13 +79,27 @@ impl Request {
         None
     }
 
-    pub fn form_data(self) {
-        let body = String::from_utf8(self.body_bytes.to_vec()).unwrap();
-        println!("{:?} {} {:?}", self.header_map, self.body_bytes.len(), body);
+    pub fn file(self, name: &str) -> Option<FormData> {
+        for form_data in self.multipart_form_data {
+            if form_data.name == name {
+                return Some(form_data);
+            }
+        }
+        None
+    }
+
+    pub fn files(self, name: &str) -> Vec<FormData> {
+        let mut form_data_list = vec![];
+        for form_data in self.multipart_form_data {
+            if form_data.name == name {
+                form_data_list.push(form_data);
+            }
+        }
+        form_data_list
     }
 }
 
-fn handle_full_path(full_path: &String) -> (String, String, String) {
+fn handle_full_path(full_path: String) -> (String, String, String) {
     let re = Regex::new(r"^(.*?)(\?.*?)?(#.*?)?$").unwrap();
     let caps = re.captures(&full_path).unwrap();
     let path = caps

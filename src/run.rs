@@ -3,6 +3,7 @@ use crate::error::JuriError;
 use crate::plugin::handle_fn;
 use crate::router::{conversion_router, handle_router, HandleFn, Router};
 use crate::thread::ThreadPool;
+use crate::cache::main::init_cache;
 use crate::{JuriPlugin, Request, Response, ResultResponse};
 use colored::*;
 use std::collections::HashMap;
@@ -13,7 +14,7 @@ use std::sync::Arc;
 pub struct Juri {
     plugins: Vec<Box<dyn JuriPlugin>>,
     router: Router,
-    thread_size: usize,
+    pub thread_size: usize,
     response_404: fn(request: Request) -> Response,
     response_500: fn(request: Request) -> Response,
 }
@@ -55,6 +56,7 @@ impl Juri {
         }
     }
     pub fn run(self, addr: &str) {
+        init_cache();
         let listener = TcpListener::bind(addr).unwrap();
         println!("{}: listener port http://{} start", "Juri".green(), addr);
         let pool = ThreadPool::new(self.thread_size);
@@ -67,11 +69,17 @@ impl Juri {
             let router = Arc::clone(&router);
             let plugins = Arc::clone(&plugins);
             pool.execute(move || match handle_bytes(&mut stream) {
-                Ok((headers_bytes, body_bytes)) => {
-                    let mut request = Request::new(headers_bytes, body_bytes);
+                Ok(mut request) => {
                     let method = request.method.clone();
                     let path = request.path.clone();
-                    println!("{}: Request {} {}", "INFO".green(), method, path);
+                    let peer_addr = stream.peer_addr().unwrap().ip();
+                    println!(
+                        "{}: Request {} {} {}",
+                        "INFO".green(),
+                        method,
+                        path,
+                        peer_addr
+                    );
 
                     let mut plugin = plugins.iter();
                     let plugin_response = loop {
@@ -86,9 +94,7 @@ impl Juri {
                         }
                     };
                     let mut response = match plugin_response {
-                        Some(response) => {
-                           response
-                        }
+                        Some(response) => response,
                         None => {
                             match handle_router(&mut request, router) {
                                 Some(fun) => {
@@ -108,9 +114,9 @@ impl Juri {
                                 }
                                 None => (self.response_404)(request),
                             }
-                        },
+                        }
                     };
-            
+
                     for plugin in plugins.iter() {
                         plugin.response(&mut response);
                     }
@@ -125,7 +131,7 @@ impl Juri {
                     stream.write(response_str.as_bytes()).unwrap();
                     stream.flush().unwrap();
                 }
-                Err(e) => println!("{}: {:?}", "Juri".green(), e),
+                Err(e) => println!("{}: {:?}", "ERROR".red(), e),
             });
         }
     }

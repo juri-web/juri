@@ -1,4 +1,5 @@
 mod byte;
+mod cache;
 mod error;
 pub mod json;
 mod plugin;

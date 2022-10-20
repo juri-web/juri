@@ -1,20 +1,26 @@
-use std::{net::TcpStream, io::{self, Read}};
+use crate::{byte::stream::JuriStream, JuriCustomError, Request};
+use std::{io::Read, net::TcpStream};
 
-pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>)> {
+pub fn handle_bytes(stream: &mut TcpStream) -> Result<Request, JuriCustomError> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
-    let mut headers_bytes = Vec::<Vec<u8>>::new();
-    let mut body_bytes = Vec::<u8>::new();
     let mut temp_header_bytes = Vec::<u8>::new();
     let mut flag_body = false;
     const BUFFER_SIZE: usize = 1024 * 2;
+
+    let mut juri_stream = JuriStream::new();
+
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
-        let bytes_count = stream.read(&mut buffer)?;
+        let bytes_count = stream.read(&mut buffer).map_err(|e| JuriCustomError {
+            code: 500,
+            reason: e.to_string(),
+        })?;
         if bytes_count == 0 {
             break;
         } else if flag_body {
-            body_bytes.append(&mut buffer[..bytes_count].to_vec());
+            let body_bytes = &mut buffer[..bytes_count].to_vec();
+            juri_stream.handle_request_body_bytes(body_bytes);
         } else {
             let mut flag_n = false;
             let mut flag_r = false;
@@ -27,16 +33,17 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>
                 {
                     if temp_header_bytes.len() == 1 {
                         // 13 / 10 * * * *
-                        body_bytes.append(&mut buffer[(index + 1)..bytes_count].to_vec());
                         flag_body = true;
+                        juri_stream.header_end();
+                        let body_bytes = &mut buffer[(index + 1)..bytes_count].to_vec();
+                        juri_stream.handle_request_body_bytes(body_bytes);
                         break;
                     } else {
                         // * * * * 13 / 10 * * * *
-                        headers_bytes.push(
-                            temp_header_bytes[..temp_header_bytes.len() - 1]
-                                .to_vec()
-                                .clone(),
-                        );
+                        let header_bytes = temp_header_bytes[..temp_header_bytes.len() - 1]
+                            .to_vec()
+                            .clone();
+                        juri_stream.handle_request_header_bytes(header_bytes);
                         temp_header_bytes.clear();
                         point_index = index + 1;
                         continue;
@@ -59,18 +66,21 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>
                             break;
                         }
                         // * * / * * 13 10 * * * * or 13 10 * * * *
-                        body_bytes.append(&mut buffer[(index + 1)..bytes_count].to_vec());
-
                         flag_body = true;
+                        juri_stream.header_end();
+                        let body_bytes = &mut buffer[(index + 1)..bytes_count].to_vec();
+                        juri_stream.handle_request_body_bytes(body_bytes);
                         break;
                     } else if temp_header_bytes.len() == 0 {
                         // * * * * 13 10 * * * *
-                        headers_bytes.push(buffer[point_index..(index - 1)].to_vec().clone());
+                        let header_bytes = buffer[point_index..(index - 1)].to_vec().clone();
+                        juri_stream.handle_request_header_bytes(header_bytes);
                     } else {
                         // * * / * * 13 10 * * * *
                         temp_header_bytes
                             .append(&mut buffer[point_index..(index - 1)].to_vec().clone());
-                        headers_bytes.push(temp_header_bytes.clone());
+                        let header_bytes = temp_header_bytes.clone();
+                        juri_stream.handle_request_header_bytes(header_bytes);
                         temp_header_bytes.clear();
                     }
                     point_index = index + 1;
@@ -90,5 +100,6 @@ pub fn handle_bytes(stream: &mut TcpStream) -> io::Result<(Vec<Vec<u8>>, Vec<u8>
             break;
         }
     }
-    Ok((headers_bytes, body_bytes))
+
+    juri_stream.get_request()
 }
