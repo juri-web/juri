@@ -7,6 +7,7 @@ mod request;
 mod response;
 mod result;
 mod router;
+mod routing;
 mod run;
 mod thread;
 
