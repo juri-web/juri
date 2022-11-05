@@ -1,7 +1,7 @@
 use crate::{byte::stream::JuriStream, JuriCustomError, Request};
-use std::{io::Read, net::TcpStream};
+use async_std::{io::ReadExt, net::TcpStream};
 
-pub fn handle_bytes(stream: &mut TcpStream) -> Result<Request, JuriCustomError> {
+pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request, JuriCustomError> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
     let mut temp_header_bytes = Vec::<u8>::new();
@@ -12,10 +12,13 @@ pub fn handle_bytes(stream: &mut TcpStream) -> Result<Request, JuriCustomError> 
 
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
-        let bytes_count = stream.read(&mut buffer).map_err(|e| JuriCustomError {
-            code: 500,
-            reason: e.to_string(),
-        })?;
+        let bytes_count = stream
+            .read(&mut buffer)
+            .await
+            .map_err(|e| JuriCustomError {
+                code: 500,
+                reason: e.to_string(),
+            })?;
         if bytes_count == 0 {
             break;
         } else if flag_body {
