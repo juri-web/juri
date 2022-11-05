@@ -8,7 +8,7 @@ fn result(flag: bool) -> juri::Result<String> {
     }
 }
 
-pub fn handle_result_mode(request: Request) -> juri::Result<Response> {
+pub fn handle_result_mode(request: &Request) -> juri::Result<Response> {
     let flag = request.query("flag").map_or(false, |_v| true);
     let point = result(flag)?;
 

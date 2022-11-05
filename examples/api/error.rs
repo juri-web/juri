@@ -8,7 +8,7 @@ fn error(flag: bool) -> juri::Result<String> {
     }
 }
 
-pub fn handle_error_mode(request: Request) -> juri::Result<Response> {
+pub fn handle_error_mode(request: &Request) -> juri::Result<Response> {
     let flag = request.query("flag").map_or(false, |_v| true);
     let point = error(flag)?;
 

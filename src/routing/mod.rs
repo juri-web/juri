@@ -4,7 +4,7 @@ use crate::{Request, Response};
 use async_std::sync::Arc;
 use regex::Regex;
 use std::collections::HashMap;
-type HandleFn = fn(request: Request) -> crate::Result<Response>;
+type HandleFn = fn(request: &Request) -> crate::Result<Response>;
 pub type Route = (HTTPMethod, String, HandleFn);
 
 pub struct Router {

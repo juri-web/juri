@@ -5,7 +5,7 @@ use std::fs;
 pub static TEMPLATE_PATH: &str = "./examples/template";
 
 // 首页
-pub fn handle_index(request: Request) -> juri::Result<Response> {
+pub fn handle_index(request: &Request) -> juri::Result<Response> {
     println!(
         "query a={}",
         request
@@ -22,7 +22,7 @@ struct Point {
     y: i32,
 }
 
-pub fn handle_params(request: Request) -> juri::Result<Response> {
+pub fn handle_params(request: &Request) -> juri::Result<Response> {
     let point = Point { x: 2, y: 3 };
     println!(
         "param bb={}",
