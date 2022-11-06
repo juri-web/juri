@@ -52,24 +52,3 @@ impl Response {
         format!("{0}{1}{2}", headers_str, CRLF, self.contents)
     }
 }
-
-/// # Examples
-///```
-/// use juri::{Request, Response, ResultResponse};
-///
-/// fn result(flag: bool) -> ResultResponse<String> {
-///     if flag {
-///         Ok("Mode".to_string())
-///     } else {
-///         Err(Response::html_str(""))
-///    }
-/// }
-///
-/// pub fn handle_result_mode(request: Request) -> ResultResponse<Response> {
-///     // Use ? quickly return Response
-///     let point = result(true)?;
-///
-///     Ok(Response::json_str(&point))
-/// }
-///```
-pub type ResultResponse<T> = Result<T, Response>;
