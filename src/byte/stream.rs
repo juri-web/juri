@@ -1,10 +1,12 @@
 use crate::{cache::main::get_cache_file_path, JuriCustomError, Request};
+use async_std::{
+    fs::{File, OpenOptions},
+    io::WriteExt,
+};
 use regex::Regex;
 use std::{
     collections::{hash_map::DefaultHasher, HashMap},
-    fs::{self, OpenOptions},
     hash::{Hash, Hasher},
-    io::Write,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -63,9 +65,9 @@ impl JuriStream {
         }
     }
 
-    pub fn handle_request_body_bytes(&mut self, body_bytes: &mut Vec<u8>) {
+    pub async fn handle_request_body_bytes(&mut self, body_bytes: &mut Vec<u8>) {
         if let Some(multipart_form_data) = self.multipart_form_data.as_mut() {
-            multipart_form_data.handle_bytes(body_bytes);
+            multipart_form_data.handle_bytes(body_bytes).await;
         } else {
             self.body_bytes.append(body_bytes);
         }
@@ -92,7 +94,7 @@ impl JuriStream {
 
         request.body_bytes = self.body_bytes;
         if let Some(multipart_form_data) = self.multipart_form_data {
-            request.multipart_form_data  = multipart_form_data.form_data_vec;
+            request.multipart_form_data = multipart_form_data.form_data_vec;
         }
 
         Ok(request)
@@ -125,7 +127,7 @@ struct MultipartFormData {
 }
 
 impl MultipartFormData {
-    pub fn handle_bytes(&mut self, body_bytes: &mut Vec<u8>) {
+    pub async fn handle_bytes(&mut self, body_bytes: &mut Vec<u8>) {
         let boundary_start_vec = format!("--{}", self.boundary).as_bytes().to_vec();
         let boundary_end_vec = format!("--{}--", self.boundary).as_bytes().to_vec();
         let cache_file_path = get_cache_file_path();
@@ -220,19 +222,23 @@ impl MultipartFormData {
                             cache_file_path.join(temp_form_data.cache_file_name.clone());
 
                         let mut file;
-                        match OpenOptions::new().append(true).open(file_path.clone()) {
+                        match OpenOptions::new()
+                            .append(true)
+                            .open(file_path.clone())
+                            .await
+                        {
                             Ok(temp_file) => {
                                 file = temp_file;
                             }
                             Err(_e) => {
                                 // println!("1 {:#?} {:#?}", e, file_path.clone());
-                                file = fs::File::create(file_path).unwrap();
+                                file = File::create(file_path).await.unwrap();
                             }
                         }
 
                         bytes.push(13);
                         bytes.push(10);
-                        file.write(&bytes).unwrap();
+                        file.write(&bytes).await.unwrap();
                     }
                     point_index = index + 1;
                 } else {
@@ -248,17 +254,20 @@ impl MultipartFormData {
 
                 let file_path = cache_file_path.join(temp_form_data.cache_file_name.clone());
                 let mut file;
-                match OpenOptions::new().append(true).open(file_path.clone()) {
+                match OpenOptions::new()
+                    .append(true)
+                    .open(file_path.clone())
+                    .await
+                {
                     Ok(temp_file) => {
                         file = temp_file;
                     }
                     Err(_e) => {
-                        // println!("{:#?} {:#?}", e, file_path.clone());
-                        file = fs::File::create(file_path).unwrap();
+                        file = File::create(file_path).await.unwrap();
                     }
                 }
 
-                file.write(&bytes).unwrap();
+                file.write(&bytes).await.unwrap();
             }
         }
     }
@@ -273,6 +282,14 @@ pub struct FormData {
     _create_time_nanosecond: u32,
 
     cache_file_name: String,
+}
+
+impl FormData {
+    pub fn open(self) -> std::io::Result<std::fs::File> {
+        let cache_file_path = get_cache_file_path();
+        let file_path = cache_file_path.join(self.cache_file_name.clone());
+        std::fs::File::open(file_path)
+    }
 }
 
 fn is_vec_equals<T: std::cmp::PartialEq>(vec1: &Vec<T>, vec2: &Vec<T>) -> bool {

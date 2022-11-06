@@ -23,7 +23,7 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
             break;
         } else if flag_body {
             let body_bytes = &mut buffer[..bytes_count].to_vec();
-            juri_stream.handle_request_body_bytes(body_bytes);
+            juri_stream.handle_request_body_bytes(body_bytes).await;
         } else {
             let mut flag_n = false;
             let mut flag_r = false;
@@ -39,7 +39,7 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
                         flag_body = true;
                         juri_stream.header_end();
                         let body_bytes = &mut buffer[(index + 1)..bytes_count].to_vec();
-                        juri_stream.handle_request_body_bytes(body_bytes);
+                        juri_stream.handle_request_body_bytes(body_bytes).await;
                         break;
                     } else {
                         // * * * * 13 / 10 * * * *
@@ -72,7 +72,7 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
                         flag_body = true;
                         juri_stream.header_end();
                         let body_bytes = &mut buffer[(index + 1)..bytes_count].to_vec();
-                        juri_stream.handle_request_body_bytes(body_bytes);
+                        juri_stream.handle_request_body_bytes(body_bytes).await;
                         break;
                     } else if temp_header_bytes.len() == 0 {
                         // * * * * 13 10 * * * *
