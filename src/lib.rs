@@ -1,5 +1,6 @@
 mod byte;
 mod cache;
+mod config;
 mod error;
 pub mod json;
 mod plugin;
@@ -17,3 +18,4 @@ pub use response::Response;
 pub use result::Result;
 pub use routing::Router;
 pub use server::Server;
+pub use config::Config;
