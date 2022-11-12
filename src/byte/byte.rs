@@ -1,7 +1,12 @@
-use crate::{byte::stream::JuriStream, JuriCustomError, Request};
+use crate::{byte::stream::JuriStream, Config, JuriCustomError, Request};
 use async_std::{io::ReadExt, net::TcpStream};
+use std::sync::Arc;
+use std::time::Duration;
 
-pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request, JuriCustomError> {
+pub async fn handle_bytes(
+    stream: &mut TcpStream,
+    config: Arc<Config>,
+) -> std::result::Result<Request, JuriCustomError> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
     let mut temp_header_bytes = Vec::<u8>::new();
@@ -12,13 +17,24 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
 
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
-        let bytes_count = stream
-            .read(&mut buffer)
-            .await
-            .map_err(|e| JuriCustomError {
-                code: 500,
-                reason: e.to_string(),
-            })?;
+
+        let dur = Duration::from_secs(config.keep_alive_timeout);
+        let bytes_count = async_std::future::timeout(dur, async {
+            let bytes_count = stream
+                .read(&mut buffer)
+                .await
+                .map_err(|e| JuriCustomError {
+                    code: 500,
+                    reason: e.to_string(),
+                })?;
+            Ok(bytes_count)
+        })
+        .await
+        .map_err(|e| JuriCustomError {
+            code: 500,
+            reason: e.to_string(),
+        })??;
+
         if bytes_count == 0 {
             break;
         } else if flag_body {

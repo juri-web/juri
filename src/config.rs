@@ -1,5 +1,5 @@
 pub struct Config {
-    pub keep_alive_timeout: u16,
+    pub keep_alive_timeout: u64,
 }
 
 impl Config {
