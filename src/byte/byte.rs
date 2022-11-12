@@ -53,15 +53,15 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
                     }
                 }
 
-                if flag_n {
+                if flag_r {
                     if *value == 10 {
-                        flag_r = true;
+                        flag_n = true;
                     } else {
-                        flag_n = false;
+                        flag_r = false;
                     }
                 }
                 if *value == 13 {
-                    flag_n = true;
+                    flag_r = true;
                 }
                 if flag_n && flag_r {
                     if index == point_index + 1 {
