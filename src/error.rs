@@ -1,5 +1,7 @@
 use crate::Response;
 
+pub type Result<T> = std::result::Result<T, JuriError>;
+
 #[derive(Debug)]
 pub struct JuriCustomError {
     pub code: u16,
@@ -10,7 +12,7 @@ pub struct JuriCustomError {
 ///```
 /// use juri::{Request, Response, JuriError, JuriCustomError};
 /// use std::collections::HashMap;
-/// 
+///
 /// fn get_super_error(flag: bool) -> juri::Result<()> {
 ///     if flag {
 ///         Err(JuriError::ResponseError(Response {

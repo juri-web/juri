@@ -6,7 +6,7 @@ use std::collections::HashMap;
 pub struct Request {
     pub method: String,
     pub full_path: String,
-    pub version: String,
+    pub protocol_and_version: String,
     pub path: String,
     pub header_map: HashMap<String, String>,
     pub params_map: HashMap<String, String>,
@@ -21,7 +21,7 @@ impl Request {
         Request {
             method: "".to_string(),
             full_path: "".to_string(),
-            version: "".to_string(),
+            protocol_and_version: "".to_string(),
             path: "".to_string(),
             header_map: HashMap::new(),
             params_map: HashMap::new(),
@@ -96,6 +96,18 @@ impl Request {
             }
         }
         form_data_list
+    }
+
+    pub fn is_keep_alive(&self) -> bool{
+        if self.protocol_and_version == "HTTP/1.1" {
+            if let Some(connection) = self.header("Connection") {
+                if connection == "keep-alive" {
+                    return true
+                }
+            }
+        }
+        
+        false
     }
 }
 

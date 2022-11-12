@@ -88,7 +88,7 @@ impl JuriStream {
         )?;
         request.method = request_line.0;
         request.set_full_path(request_line.1);
-        request.version = request_line.2;
+        request.protocol_and_version = request_line.2;
 
         request.header_map = self.header_map;
 

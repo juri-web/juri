@@ -1,5 +1,5 @@
 use crate::{
-    byte::handle_bytes,
+    byte::{handle_bytes, send_stream},
     cache::main::init_cache,
     plugin::JuriPlugin,
     routing::{conversion_router, handle_router, MatchRouter, Router},
@@ -76,7 +76,7 @@ impl Server {
             let plugins = Arc::clone(&plugins);
             let config = Arc::clone(&config);
 
-            match handle_bytes(&mut stream, config).await {
+            match handle_bytes(&mut stream, &config).await {
                 Ok(mut request) => {
                     let peer_addr = stream.peer_addr().unwrap().ip();
                     println!(
@@ -128,18 +128,10 @@ impl Server {
                         request.path,
                         response.status_code
                     );
-                    let response_str = response.get_response_str();
-                    stream.write(response_str.as_bytes()).await.unwrap();
-                    stream.flush().await.unwrap();
 
-                    if request.version != "1.1" {
-                        break;
-                    }
-                    if let Some(connection) = request.header("Connection") {
-                        if connection != "keep-alive" {
-                            break;
-                        }
-                    } else {
+                    send_stream(&mut stream, &config, &request, &response).await;
+
+                    if !request.is_keep_alive() {
                         break;
                     }
                 }

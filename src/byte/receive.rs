@@ -32,7 +32,7 @@ async fn read_buffer(
 
 pub async fn handle_bytes(
     stream: &mut TcpStream,
-    config: Arc<Config>,
+    config: &Arc<Config>,
 ) -> std::result::Result<Request, JuriCustomError> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0

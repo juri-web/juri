@@ -1,7 +1,5 @@
 use std::collections::HashMap;
 
-pub const CRLF: &str = "\r\n";
-
 #[derive(Debug, Clone)]
 pub struct Response {
     pub status_code: u16,
@@ -18,7 +16,7 @@ impl Response {
         };
         response.headers.insert(
             "Content-Type".to_string(),
-            format!("application/json;charset=utf-8{}", CRLF),
+            "application/json;charset=utf-8".to_string(),
         );
         response
     }
@@ -31,7 +29,7 @@ impl Response {
         };
         response.headers.insert(
             "Content-Type".to_string(),
-            format!("text/html;charset=utf-8{}", CRLF),
+            "text/html;charset=utf-8".to_string(),
         );
         response
     }
@@ -40,15 +38,18 @@ impl Response {
         self.status_code = status_code;
         self
     }
+}
 
-    pub fn get_response_str(&self) -> String {
-        let status = format!("HTTP/1.1 {} {}{}", self.status_code, "OK", CRLF);
-        let server = format!("Server: Rust{}", CRLF);
-        let content_length = format!("Content-Length: {}{}", self.contents.as_bytes().len(), CRLF);
-        let mut headers_str = format!("{0}{1}{2}", status, server, content_length);
-        for (key, value) in self.headers.iter() {
-            headers_str.push_str(format!("{}: {}", key, value).as_str());
-        }
-        format!("{0}{1}{2}", headers_str, CRLF, self.contents)
+impl Response {
+    pub fn is_body_big(&self) -> bool {
+        false
+    }
+
+    pub fn get_body_bytes_len(&self) -> Option<usize> {
+        Some(self.contents.as_bytes().len())
+    }
+
+    pub fn generate_body_bytes(&self) -> Vec<u8> {
+        self.contents.as_bytes().to_vec()
     }
 }
