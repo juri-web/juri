@@ -5,7 +5,7 @@ use std::sync::Arc;
 pub const CRLF: &str = "\r\n";
 
 fn generate_response_header_bytes(
-    request: &Request,
+    request: Option<&Request>,
     response: &Response,
     config: &Arc<Config>,
 ) -> Vec<u8> {
@@ -17,12 +17,15 @@ fn generate_response_header_bytes(
         headers_str.push_str(format!("{}: {}\r\n", key, value).as_str());
     }
 
-    if request.is_keep_alive() {
-        headers_str.push_str("Connection: keep-alive\r\n");
-        headers_str
-            .push_str(format!("Keep-Alive: timeout={}\r\n", config.keep_alive_timeout).as_str());
-    } else {
-        headers_str.push_str("Connection: close\r\n");
+    if let Some(request) = request {
+        if request.is_keep_alive() {
+            headers_str.push_str("Connection: keep-alive\r\n");
+            headers_str.push_str(
+                format!("Keep-Alive: timeout={}\r\n", config.keep_alive_timeout).as_str(),
+            );
+        } else {
+            headers_str.push_str("Connection: close\r\n");
+        }
     }
 
     if let Some(content_length) = response.get_body_bytes_len() {
@@ -37,7 +40,7 @@ fn generate_response_header_bytes(
 pub async fn send_stream(
     stream: &mut TcpStream,
     config: &Arc<Config>,
-    request: &Request,
+    request: Option<&Request>,
     response: &Response,
 ) {
     if response.is_body_big() {

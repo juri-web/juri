@@ -1,6 +1,4 @@
-mod http_method;
-use self::http_method::HTTPMethod;
-use crate::{Request, Response};
+use crate::{request::HTTPMethod, Request, Response};
 use async_std::sync::Arc;
 use regex::Regex;
 use std::collections::HashMap;
@@ -77,19 +75,16 @@ pub fn conversion_route_list(route_list: &Vec<Route>) -> Vec<MatchRoute> {
 
 pub fn handle_router(request: &mut Request, router: Arc<MatchRouter>) -> Option<HandleFn> {
     let route_list;
-    if request.method == "GET" {
-        route_list = Some(&router.get);
-    } else if request.method == "POST" {
-        route_list = Some(&router.post);
-    } else {
-        route_list = None
+
+    match request.method {
+        HTTPMethod::GET => route_list = &router.get,
+        HTTPMethod::POST => route_list = &router.post,
     }
-    if let Some(route_list) = route_list {
-        for route in route_list {
-            if let Some(map) = match_router_path(route, request.path.clone()) {
-                request.params_map = map;
-                return Some(route.2);
-            }
+
+    for route in route_list {
+        if let Some(map) = match_router_path(&route, request.path.clone()) {
+            request.params_map = map;
+            return Some(route.2);
         }
     }
     None

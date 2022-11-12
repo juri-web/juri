@@ -1,4 +1,4 @@
-use crate::{cache::main::get_cache_file_path, JuriCustomError, Request};
+use crate::{cache::main::get_cache_file_path, JuriCustomError, Request, request::HTTPMethod};
 use async_std::{
     fs::{File, OpenOptions},
     io::WriteExt,
@@ -86,7 +86,7 @@ impl JuriStream {
             }),
             |v| Ok(v),
         )?;
-        request.method = request_line.0;
+        request.method =  HTTPMethod::from(request_line.0)?;
         request.set_full_path(request_line.1);
         request.protocol_and_version = request_line.2;
 
@@ -231,7 +231,6 @@ impl MultipartFormData {
                                 file = temp_file;
                             }
                             Err(_e) => {
-                                // println!("1 {:#?} {:#?}", e, file_path.clone());
                                 file = File::create(file_path).await.unwrap();
                             }
                         }
@@ -242,7 +241,7 @@ impl MultipartFormData {
                     }
                     point_index = index + 1;
                 } else {
-                    println!("Error---------------------------------------------------");
+                    panic!("Error: Out of the question");
                 }
                 flag_n = false;
                 flag_r = false;

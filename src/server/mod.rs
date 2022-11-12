@@ -129,14 +129,37 @@ impl Server {
                         response.status_code
                     );
 
-                    send_stream(&mut stream, &config, &request, &response).await;
+                    send_stream(&mut stream, &config, Some(&request), &response).await;
 
                     if !request.is_keep_alive() {
                         break;
                     }
                 }
                 Err(e) => {
-                    println!("{}: {:?}", "ERROR".red(), e);
+                    match e.code {
+                        405 => {
+                            let response = Response {
+                                status_code: 405,
+                                contents: "".to_string(),
+                                headers: HashMap::new(),
+                            };
+                            send_stream(&mut stream, &config, None, &response).await;
+                        }
+                        500 => {
+                            let response = Response {
+                                status_code: 500,
+                                contents: "<h1>500</h1>".to_string(),
+                                headers: HashMap::from([(
+                                    "Content-Type".to_string(),
+                                    "text/html;charset=utf-8".to_string(),
+                                )]),
+                            };
+                            send_stream(&mut stream, &config, None, &response).await;
+                        }
+                        _ => {
+                            println!("{}: {:?}", "ERROR".red(), e);
+                        }
+                    }
                     break;
                 }
             };
@@ -150,7 +173,7 @@ fn response_404(_request: &Request) -> Response {
         contents: "<h1>404</h1>".to_string(),
         headers: HashMap::from([(
             "Content-Type".to_string(),
-            "text/html;charset=utf-8\r\n".to_string(),
+            "text/html;charset=utf-8".to_string(),
         )]),
     }
 }
@@ -161,7 +184,7 @@ fn response_500(_request: &Request) -> Response {
         contents: "<h1>500</h1>".to_string(),
         headers: HashMap::from([(
             "Content-Type".to_string(),
-            "text/html;charset=utf-8\r\n".to_string(),
+            "text/html;charset=utf-8".to_string(),
         )]),
     }
 }

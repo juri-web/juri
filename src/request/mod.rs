@@ -1,10 +1,12 @@
 use crate::byte::FormData;
 use regex::Regex;
 use std::collections::HashMap;
+mod http_method;
+pub use http_method::HTTPMethod;
 
 #[derive(Clone)]
 pub struct Request {
-    pub method: String,
+    pub method: HTTPMethod,
     pub full_path: String,
     pub protocol_and_version: String,
     pub path: String,
@@ -19,7 +21,7 @@ pub struct Request {
 impl Request {
     pub fn new() -> Self {
         Request {
-            method: "".to_string(),
+            method: HTTPMethod::GET,
             full_path: "".to_string(),
             protocol_and_version: "".to_string(),
             path: "".to_string(),
@@ -98,15 +100,15 @@ impl Request {
         form_data_list
     }
 
-    pub fn is_keep_alive(&self) -> bool{
+    pub fn is_keep_alive(&self) -> bool {
         if self.protocol_and_version == "HTTP/1.1" {
             if let Some(connection) = self.header("Connection") {
                 if connection == "keep-alive" {
-                    return true
+                    return true;
                 }
             }
         }
-        
+
         false
     }
 }
