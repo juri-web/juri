@@ -2,7 +2,7 @@ use crate::{
     byte::{handle_bytes, send_stream},
     cache::main::init_cache,
     plugin::JuriPlugin,
-    routing::{conversion_router, handle_router, MatchRouter, Router},
+    routing::{conversion_router, match_route, MatchRouter, Router},
     Config, JuriError, Request, Response,
 };
 use async_std::{
@@ -102,7 +102,7 @@ impl Server {
 
                     let mut response = match plugin_response {
                         Some(response) => response,
-                        None => match handle_router(&mut request, router) {
+                        None => match match_route(&mut request, router) {
                             Some(fun) => {
                                 let response: crate::Result<Response> = fun(&request);
                                 match response {
