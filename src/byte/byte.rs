@@ -1,7 +1,12 @@
-use crate::{byte::stream::JuriStream, JuriCustomError, Request};
+use crate::{byte::stream::JuriStream, Config, JuriCustomError, Request};
 use async_std::{io::ReadExt, net::TcpStream};
+use std::sync::Arc;
+use std::time::Duration;
 
-pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request, JuriCustomError> {
+pub async fn handle_bytes(
+    stream: &mut TcpStream,
+    config: Arc<Config>,
+) -> std::result::Result<Request, JuriCustomError> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
     let mut temp_header_bytes = Vec::<u8>::new();
@@ -12,18 +17,29 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
 
     loop {
         let mut buffer = vec![0u8; BUFFER_SIZE];
-        let bytes_count = stream
-            .read(&mut buffer)
-            .await
-            .map_err(|e| JuriCustomError {
-                code: 500,
-                reason: e.to_string(),
-            })?;
+
+        let dur = Duration::from_secs(config.keep_alive_timeout);
+        let bytes_count = async_std::future::timeout(dur, async {
+            let bytes_count = stream
+                .read(&mut buffer)
+                .await
+                .map_err(|e| JuriCustomError {
+                    code: 500,
+                    reason: e.to_string(),
+                })?;
+            Ok(bytes_count)
+        })
+        .await
+        .map_err(|e| JuriCustomError {
+            code: 500,
+            reason: e.to_string(),
+        })??;
+
         if bytes_count == 0 {
             break;
         } else if flag_body {
             let body_bytes = &mut buffer[..bytes_count].to_vec();
-            juri_stream.handle_request_body_bytes(body_bytes);
+            juri_stream.handle_request_body_bytes(body_bytes).await;
         } else {
             let mut flag_n = false;
             let mut flag_r = false;
@@ -39,7 +55,7 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
                         flag_body = true;
                         juri_stream.header_end();
                         let body_bytes = &mut buffer[(index + 1)..bytes_count].to_vec();
-                        juri_stream.handle_request_body_bytes(body_bytes);
+                        juri_stream.handle_request_body_bytes(body_bytes).await;
                         break;
                     } else {
                         // * * * * 13 / 10 * * * *
@@ -53,15 +69,15 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
                     }
                 }
 
-                if flag_n {
+                if flag_r {
                     if *value == 10 {
-                        flag_r = true;
+                        flag_n = true;
                     } else {
-                        flag_n = false;
+                        flag_r = false;
                     }
                 }
                 if *value == 13 {
-                    flag_n = true;
+                    flag_r = true;
                 }
                 if flag_n && flag_r {
                     if index == point_index + 1 {
@@ -72,7 +88,7 @@ pub async fn handle_bytes(stream: &mut TcpStream) -> std::result::Result<Request
                         flag_body = true;
                         juri_stream.header_end();
                         let body_bytes = &mut buffer[(index + 1)..bytes_count].to_vec();
-                        juri_stream.handle_request_body_bytes(body_bytes);
+                        juri_stream.handle_request_body_bytes(body_bytes).await;
                         break;
                     } else if temp_header_bytes.len() == 0 {
                         // * * * * 13 10 * * * *

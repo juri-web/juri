@@ -2,16 +2,21 @@ use crate::{
     byte::handle_bytes,
     cache::main::init_cache,
     plugin::JuriPlugin,
-    routing::{conversion_router, handle_router, Router},
-    JuriError, Request, Response,
+    routing::{conversion_router, handle_router, MatchRouter, Router},
+    Config, JuriError, Request, Response,
 };
-use async_std::{net::TcpListener, prelude::*, sync::Arc};
+use async_std::{
+    net::{TcpListener, TcpStream},
+    prelude::*,
+    sync::Arc,
+};
 use colored::*;
 use std::{collections::HashMap, net::SocketAddr};
 
 pub struct Server {
     addr: SocketAddr,
     plugins: Vec<Box<dyn JuriPlugin>>,
+    config: Config,
 }
 
 impl Server {
@@ -19,11 +24,18 @@ impl Server {
         Server {
             addr,
             plugins: vec![],
+            config: Config::new(),
         }
     }
 
-    pub fn plugin(mut self, plugin: impl JuriPlugin) {
+    pub fn config(mut self, config: Config) -> Self {
+        self.config = config;
+        self
+    }
+
+    pub fn plugin(mut self, plugin: impl JuriPlugin) -> Self {
         self.plugins.push(Box::new(plugin));
+        self
     }
 
     pub async fn server(
@@ -40,13 +52,31 @@ impl Server {
         let mut incoming = listener.incoming();
         let router = Arc::new(conversion_router(router));
         let plugins = Arc::new(self.plugins);
+        let config = Arc::new(self.config);
 
         while let Some(stream) = incoming.next().await {
-            let mut stream = stream?;
+            let stream = stream?;
             let router = Arc::clone(&router);
             let plugins = Arc::clone(&plugins);
+            let config = Arc::clone(&config);
 
-            match handle_bytes(&mut stream).await {
+            Server::handle_stream(stream, router, plugins, config).await;
+        }
+        Ok(())
+    }
+
+    async fn handle_stream(
+        mut stream: TcpStream,
+        router: Arc<MatchRouter>,
+        plugins: Arc<Vec<Box<dyn JuriPlugin>>>,
+        config: Arc<Config>,
+    ) {
+        loop {
+            let router = Arc::clone(&router);
+            let plugins = Arc::clone(&plugins);
+            let config = Arc::clone(&config);
+
+            match handle_bytes(&mut stream, config).await {
                 Ok(mut request) => {
                     let peer_addr = stream.peer_addr().unwrap().ip();
                     println!(
@@ -101,11 +131,24 @@ impl Server {
                     let response_str = response.get_response_str();
                     stream.write(response_str.as_bytes()).await.unwrap();
                     stream.flush().await.unwrap();
+
+                    if request.version != "1.1" {
+                        break;
+                    }
+                    if let Some(connection) = request.header("Connection") {
+                        if connection != "keep-alive" {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
                 }
-                Err(e) => println!("{}: {:?}", "ERROR".red(), e),
+                Err(e) => {
+                    println!("{}: {:?}", "ERROR".red(), e);
+                    break;
+                }
             };
         }
-        Ok(())
     }
 }
 
