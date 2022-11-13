@@ -1,9 +1,8 @@
 mod api;
-use juri::Router;
-use std::net::SocketAddr;
+use juri::{Router, StaticFilePlugin};
+use std::{net::SocketAddr, env};
 
-#[async_std::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+fn init_router() -> Router {
     let mut router = Router::new();
 
     router.get("/", api::views::handle_index);
@@ -18,7 +17,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     router.get("/upload/file", api::upload::upload_file);
     router.post("/upload/file2", api::upload::post_upload_file);
 
+    router.get("/file/static", api::views::handle_static_file);
+
+    router
+}
+
+#[async_std::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let router = init_router();
+
+    let current_dir = env::current_dir().unwrap();
+    let static_file_plugin = StaticFilePlugin::new(vec!["/static".to_string()], vec![
+        current_dir.join("examples").join("static")
+    ]);
+
     let addr = SocketAddr::from(([127, 0, 0, 1], 7878));
-    juri::Server::bind(addr).server(router).await?;
+    juri::Server::bind(addr)
+        .plugin(static_file_plugin)
+        .server(router)
+        .await?;
     Ok(())
 }

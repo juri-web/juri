@@ -32,3 +32,10 @@ pub fn handle_params(request: &Request) -> juri::Result<Response> {
     );
     Ok(Response::json(&point))
 }
+
+// 首页
+pub fn handle_static_file(request: &Request) -> juri::Result<Response> {
+    println!("fill path={}", request.full_path);
+    let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/static_file.html")).unwrap();
+    Ok(Response::html_str(&content))
+}

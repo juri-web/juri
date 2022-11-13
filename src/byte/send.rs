@@ -1,8 +1,11 @@
+use crate::response::ResponseBodyByte;
 use crate::{Config, Request, Response};
+use async_std::fs::File;
 use async_std::{net::TcpStream, prelude::*};
 use std::sync::Arc;
 
 pub const CRLF: &str = "\r\n";
+const BUFFER_SIZE: usize = 1024 * 2;
 
 fn generate_response_header_bytes(
     request: Option<&Request>,
@@ -43,13 +46,32 @@ pub async fn send_stream(
     request: Option<&Request>,
     response: &Response,
 ) {
-    if response.is_body_big() {
-        panic!("send_stream: body big");
-    } else {
-        let mut bytes = generate_response_header_bytes(request, response, config);
-        bytes.append(&mut response.generate_body_bytes());
+    let mut bytes = generate_response_header_bytes(request, response, config);
 
-        stream.write(&bytes).await.unwrap();
+    match response.get_body_bytes() {
+        ResponseBodyByte::All(mut body_bytes) => {
+            bytes.append(&mut body_bytes);
+            stream.write(&bytes).await.unwrap();
+        }
+        ResponseBodyByte::File(path) => {
+            let mut file = File::open(path).await.unwrap();
+            let mut buffer = vec![0u8; BUFFER_SIZE];
+
+            stream.write(&bytes).await.unwrap();
+            loop {
+                let bytes_count = file.read(&mut buffer).await.unwrap();
+                if bytes_count == 0 {
+                    break;
+                }
+                
+                stream.write(&buffer).await.unwrap();
+
+                if bytes_count < BUFFER_SIZE {
+                    break;
+                }
+            }
+        }
+        ResponseBodyByte::None => {}
     }
     stream.flush().await.unwrap();
 }

@@ -11,8 +11,8 @@ mod server;
 
 pub use config::Config;
 pub use error::{JuriCustomError, JuriError, Result};
-pub use plugin::JuriPlugin;
+pub use plugin::{JuriPlugin, StaticFilePlugin};
 pub use request::Request;
-pub use response::Response;
+pub use response::{Response, ResponseBody};
 pub use routing::Router;
 pub use server::Server;

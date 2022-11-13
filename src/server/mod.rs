@@ -3,7 +3,7 @@ use crate::{
     cache::main::init_cache,
     plugin::JuriPlugin,
     routing::{conversion_router, match_route, MatchRouter, Router},
-    Config, JuriError, Request, Response,
+    Config, JuriError, Response,
 };
 use async_std::{
     net::{TcpListener, TcpStream},
@@ -11,7 +11,7 @@ use async_std::{
     sync::Arc,
 };
 use colored::*;
-use std::{collections::HashMap, net::SocketAddr};
+use std::net::SocketAddr;
 
 pub struct Server {
     addr: SocketAddr,
@@ -110,12 +110,12 @@ impl Server {
                                 match response {
                                     Ok(response) => response,
                                     Err(err) => match err {
-                                        JuriError::CustomError(_) => (response_500)(&request),
+                                        JuriError::CustomError(_) => Response::new_500(),
                                         JuriError::ResponseError(response) => response,
                                     },
                                 }
                             }
-                            None => (response_404)(&request),
+                            None => Response::new_404(),
                         },
                     };
 
@@ -144,22 +144,11 @@ impl Server {
                 Err(e) => {
                     match e.code {
                         405 => {
-                            let response = Response {
-                                status_code: 405,
-                                contents: "".to_string(),
-                                headers: HashMap::new(),
-                            };
+                            let response = Response::new_405();
                             send_stream(&mut stream, &config, None, &response).await;
                         }
                         500 => {
-                            let response = Response {
-                                status_code: 500,
-                                contents: "<h1>500</h1>".to_string(),
-                                headers: HashMap::from([(
-                                    "Content-Type".to_string(),
-                                    "text/html;charset=utf-8".to_string(),
-                                )]),
-                            };
+                            let response = Response::new_500();
                             send_stream(&mut stream, &config, None, &response).await;
                         }
                         _ => {
@@ -170,27 +159,5 @@ impl Server {
                 }
             };
         }
-    }
-}
-
-fn response_404(_request: &Request) -> Response {
-    Response {
-        status_code: 404,
-        contents: "<h1>404</h1>".to_string(),
-        headers: HashMap::from([(
-            "Content-Type".to_string(),
-            "text/html;charset=utf-8".to_string(),
-        )]),
-    }
-}
-
-fn response_500(_request: &Request) -> Response {
-    Response {
-        status_code: 500,
-        contents: "<h1>500</h1>".to_string(),
-        headers: HashMap::from([(
-            "Content-Type".to_string(),
-            "text/html;charset=utf-8".to_string(),
-        )]),
     }
 }
