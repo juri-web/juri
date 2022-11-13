@@ -87,10 +87,12 @@ impl Server {
                         peer_addr
                     );
 
+                    let mut run_plugin_number: usize = 0;
                     let mut plugin = plugins.iter();
                     let plugin_response = loop {
                         match plugin.next() {
                             Some(plugin) => {
+                                run_plugin_number += 1;
                                 let response = plugin.request(&mut request);
                                 if let Some(response) = response {
                                     break Some(response);
@@ -117,7 +119,11 @@ impl Server {
                         },
                     };
 
-                    for plugin in plugins.iter() {
+                    for plugin in plugins.iter().rev() {
+                        if run_plugin_number == 0 {
+                            break;
+                        }
+                        run_plugin_number -= 1;
                         plugin.response(&request, &mut response);
                     }
 
