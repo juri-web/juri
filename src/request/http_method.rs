@@ -1,7 +1,7 @@
 use crate::JuriCustomError;
 use std::fmt;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum HTTPMethod {
     GET,
     POST,

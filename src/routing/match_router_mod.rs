@@ -18,7 +18,7 @@ pub fn match_route(request: &mut Request, router: Arc<MatchRouter>) -> Option<Ha
     }
 
     for route in route_list {
-        if let Some(map) = match_route_path(&route, request.path.clone()) {
+        if let Some(map) = match_route_path(route.0.clone(), route.1.clone(), request.path.clone()) {
             request.params_map = map;
             return Some(route.2);
         }
@@ -26,12 +26,16 @@ pub fn match_route(request: &mut Request, router: Arc<MatchRouter>) -> Option<Ha
     None
 }
 
-fn match_route_path(route: &MatchRoute, path: String) -> Option<HashMap<String, String>> {
-    let re = Regex::new(route.0.as_str()).unwrap();
+pub fn match_route_path(
+    re: String,
+    params: Vec<String>,
+    path: String,
+) -> Option<HashMap<String, String>> {
+    let re = Regex::new(&re).unwrap();
     let caps = re.captures(&path);
     if let Some(caps) = caps {
         let mut map = HashMap::<String, String>::new();
-        for (index, key) in route.1.iter().enumerate() {
+        for (index, key) in params.iter().enumerate() {
             if let Some(value) = caps.get(index + 1) {
                 map.insert(key.to_string(), value.as_str().to_string());
             }
@@ -39,4 +43,31 @@ fn match_route_path(route: &MatchRoute, path: String) -> Option<HashMap<String, 
         return Some(map);
     }
     None
+}
+
+#[test]
+fn test_match_route_path() {
+    let params_map = match_route_path("^/aa$".to_string(), vec![], "/aa".to_string());
+    assert_ne!(params_map, None);
+
+    let params_map = match_route_path(
+        "^/aa/([^/]*?)$".to_string(),
+        vec!["bb".to_string()],
+        "/aa/11".to_string(),
+    );
+    assert_ne!(params_map, None);
+
+    let params_map = match_route_path(
+        "^/aa/([^/]*?)/cc$".to_string(),
+        vec!["bb".to_string()],
+        "/aa/11/cc".to_string(),
+    );
+    assert_ne!(params_map, None);
+
+    let params_map = match_route_path(
+        "^/aa/(.+)$".to_string(),
+        vec!["bb".to_string()],
+        "/aa/11/cc".to_string(),
+    );
+    assert_ne!(params_map, None);
 }

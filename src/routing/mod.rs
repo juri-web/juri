@@ -3,7 +3,7 @@ mod conversion_router_mod;
 mod match_router_mod;
 
 pub use conversion_router_mod::conversion_router;
-pub use match_router_mod::{MatchRoute, MatchRouter, match_route};
+pub use match_router_mod::{MatchRoute, MatchRouter, match_route, match_route_path};
 
 type HandleFn = fn(request: &Request) -> crate::Result<Response>;
 pub type Route = (HTTPMethod, String, HandleFn);
