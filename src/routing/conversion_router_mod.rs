@@ -45,8 +45,14 @@ fn conversion_route(route: &Route) -> MatchRoute {
                 path_params.push(path[..index].to_string());
                 path_re.push_str(format!("{}{}", r"/([^/]*?)", &path[index..]).as_str());
             } else {
-                path_params.push(path.to_string());
-                path_re.push_str(r"/([^/]*?)");
+                if path.ends_with("+") {
+                    path_params.push(path[..path.len() - 1].to_string());
+                    path_re.push_str(r"/(.+)");
+                    break;
+                } else {
+                    path_params.push(path.to_string());
+                    path_re.push_str(r"/([^/]*?)");
+                }
             }
         }
         (format!(r"^{}$", path_re), path_params, route.2)
@@ -69,4 +75,7 @@ fn test_conversion_route_the_path() {
 
     let match_route = conversion_route(&(HTTPMethod::GET, "/aa/:bb/cc".to_string(), handle_index));
     assert_eq!(match_route.0, "^/aa/([^/]*?)/cc$");
+
+    let match_route = conversion_route(&(HTTPMethod::GET, "/aa/:bb+".to_string(), handle_index));
+    assert_eq!(match_route.0, "^/aa/(.+)$");
 }
