@@ -1,4 +1,4 @@
-use crate::{byte::stream::JuriStream, Config, JuriCustomError, Request};
+use crate::{byte::stream::JuriStream, Config, Request};
 use async_std::{io::ReadExt, net::TcpStream};
 use std::sync::Arc;
 use std::time::Duration;
@@ -7,7 +7,7 @@ const BUFFER_SIZE: usize = 1024 * 2;
 async fn read_buffer(
     stream: &mut TcpStream,
     config: &Arc<Config>,
-) -> std::result::Result<(usize, Vec<u8>), JuriCustomError> {
+) -> std::result::Result<(usize, Vec<u8>), crate::Error> {
     let mut buffer = vec![0u8; BUFFER_SIZE];
     let dur = Duration::from_secs(config.keep_alive_timeout);
 
@@ -15,14 +15,14 @@ async fn read_buffer(
         let bytes_count = stream
             .read(&mut buffer)
             .await
-            .map_err(|e| JuriCustomError {
+            .map_err(|e| crate::Error {
                 code: 500,
                 reason: e.to_string(),
             })?;
         Ok(bytes_count)
     })
     .await
-    .map_err(|e| JuriCustomError {
+    .map_err(|e| crate::Error {
         code: 500,
         reason: e.to_string(),
     })??;
@@ -33,7 +33,7 @@ async fn read_buffer(
 pub async fn handle_bytes(
     stream: &mut TcpStream,
     config: &Arc<Config>,
-) -> std::result::Result<Request, JuriCustomError> {
+) -> std::result::Result<Request, crate::Error> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
     let mut temp_header_bytes = Vec::<u8>::new();

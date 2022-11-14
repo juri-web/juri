@@ -3,7 +3,7 @@ use crate::{
     cache::main::init_cache,
     plugin::JuriPlugin,
     routing::{conversion_router, match_route, MatchRouter, Router},
-    Config, JuriError, Response,
+    Config, Response, error::ResponseAndError,
 };
 use async_std::{
     net::{TcpListener, TcpStream},
@@ -110,8 +110,8 @@ impl Server {
                                 match response {
                                     Ok(response) => response,
                                     Err(err) => match err {
-                                        JuriError::CustomError(_) => Response::new_500(),
-                                        JuriError::ResponseError(response) => response,
+                                        ResponseAndError::Error(_) => Response::new_500(),
+                                        ResponseAndError::Response(response) => response,
                                     },
                                 }
                             }

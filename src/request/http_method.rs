@@ -1,4 +1,3 @@
-use crate::JuriCustomError;
 use std::fmt;
 
 #[derive(Clone, PartialEq)]
@@ -8,11 +7,11 @@ pub enum HTTPMethod {
 }
 
 impl HTTPMethod {
-    pub fn from(method: String) -> Result<Self, JuriCustomError> {
+    pub fn from(method: String) -> Result<Self, crate::Error> {
         let method = match method.to_uppercase().as_str() {
             "GET" => HTTPMethod::GET,
             "POST" => HTTPMethod::POST,
-            _ => Err(JuriCustomError {
+            _ => Err(crate::Error {
                 code: 405,
                 reason: "Method Not Allowed".to_string(),
             })?,

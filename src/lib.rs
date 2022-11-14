@@ -10,7 +10,7 @@ mod routing;
 mod server;
 
 pub use config::Config;
-pub use error::{JuriCustomError, JuriError, Result};
+pub use error::{Error, ResponseAndError, Result};
 pub use plugin::{JuriPlugin, StaticFilePlugin};
 pub use request::Request;
 pub use response::{Response, ResponseBody};

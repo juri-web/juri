@@ -1,10 +1,10 @@
-use juri::{JuriError::*, Request, Response};
+use juri::{Request, Response};
 
 fn error(flag: bool) -> juri::Result<String> {
     if flag {
         Ok("flag: true".to_string())
     } else {
-        Err(ResponseError(Response::html_str("flag: false")))
+        Err(Response::html_str("flag: false"))?
     }
 }
 

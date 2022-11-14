@@ -1,4 +1,4 @@
-use crate::{cache::main::get_cache_file_path, JuriCustomError, Request, request::HTTPMethod};
+use crate::{cache::main::get_cache_file_path, request::HTTPMethod, Request};
 use async_std::{
     fs::{File, OpenOptions},
     io::WriteExt,
@@ -77,16 +77,16 @@ impl JuriStream {
         self.is_multipart_form_data();
     }
 
-    pub fn get_request(self) -> Result<Request, JuriCustomError> {
+    pub fn get_request(self) -> Result<Request, crate::Error> {
         let mut request = Request::new();
         let request_line = self.request_line.map_or(
-            Err(JuriCustomError {
+            Err(crate::Error {
                 code: 400,
                 reason: "请求方法错误".to_string(),
             }),
             |v| Ok(v),
         )?;
-        request.method =  HTTPMethod::from(request_line.0)?;
+        request.method = HTTPMethod::from(request_line.0)?;
         request.set_full_path(request_line.1);
         request.protocol_and_version = request_line.2;
 

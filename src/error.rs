@@ -1,27 +1,27 @@
 use crate::Response;
 
-pub type Result<T> = std::result::Result<T, JuriError>;
+pub type Result<T> = std::result::Result<T, ResponseAndError>;
 
 #[derive(Debug)]
-pub struct JuriCustomError {
+pub struct Error {
     pub code: u16,
     pub reason: String,
 }
 
 /// # Examples
 ///```
-/// use juri::{Request, Response, JuriError, JuriCustomError};
+/// use juri::{Request, Response, ResponseAndError};
 /// use std::collections::HashMap;
 ///
 /// fn get_super_error(flag: bool) -> juri::Result<()> {
 ///     if flag {
-///         Err(JuriError::ResponseError(Response {
+///         Err(ResponseAndError::Response(Response {
 ///             status_code: 200,
 ///             contents: "".to_string(),
 ///             headers: HashMap::new(),
 ///         }))
 ///     } else {
-///         Err(JuriError::CustomError(JuriCustomError {
+///         Err(ResponseAndError::Error(juri::Error {
 ///             code: 1,
 ///             reason: "".to_string(),
 ///         }))
@@ -35,27 +35,27 @@ pub struct JuriCustomError {
 /// }
 ///```
 #[derive(Debug)]
-pub enum JuriError {
-    CustomError(JuriCustomError),
-    ResponseError(Response),
+pub enum ResponseAndError {
+    Error(Error),
+    Response(Response),
 }
 
-impl From<Response> for JuriError {
+impl From<Response> for ResponseAndError {
     fn from(e: Response) -> Self {
-        JuriError::ResponseError(e)
+        ResponseAndError::Response(e)
     }
 }
 
-impl From<JuriCustomError> for JuriError {
-    fn from(e: JuriCustomError) -> Self {
-        JuriError::CustomError(e)
+impl From<Error> for ResponseAndError {
+    fn from(e: Error) -> Self {
+        ResponseAndError::Error(e)
     }
 }
-impl std::fmt::Display for JuriError {
+impl std::fmt::Display for ResponseAndError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            JuriError::CustomError(_) => write!(f, "JuriError::CustomError"),
-            JuriError::ResponseError(_) => write!(f, "JuriError::Response"),
+            ResponseAndError::Error(_) => write!(f, "ResponseAndError::Error"),
+            ResponseAndError::Response(_) => write!(f, "ResponseAndError::Response"),
         }
     }
 }
