@@ -28,13 +28,13 @@ async fn main() {
 router.get("/one", handle_index);
 
 // 匹配 /one/two
-// 通过 `request.param(chapters)` 来获取 two
+// 通过 `request.param("chapters")` 来获取 two
 router.get("/one/:chapters", handle_index);
 
 // 匹配 /one/two/three
 router.get("/one/:chapters/three", handle_index);
 
 // 匹配 /one/two，/one/two/three
-// 通过 `request.param(chapters)` 来获取 /one/two -> two，/one/two/three -> two/three
+// 通过 `request.param("chapters")` 来获取 /one/two -> two，/one/two/three -> two/three
 router.get("/one/:chapters+", handle_index);
 ```
