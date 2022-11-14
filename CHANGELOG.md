@@ -1,3 +1,9 @@
+## 0.3.1 (2022-11-14)
+
+### Bug Fixes
+
+json: RequestExt has a json_value call problem
+
 ## 0.3.0 (2022-11-14)
 
 ### Features
