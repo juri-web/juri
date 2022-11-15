@@ -1,3 +1,9 @@
+## 0.3.2 (2022-11-15)
+
+### Bug Fixes
+
+request: read request body stream
+
 ## 0.3.1 (2022-11-14)
 
 ### Bug Fixes
