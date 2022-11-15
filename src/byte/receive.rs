@@ -12,13 +12,10 @@ async fn read_buffer(
     let dur = Duration::from_secs(config.keep_alive_timeout);
 
     let bytes_count = async_std::future::timeout(dur, async {
-        let bytes_count = stream
-            .read(&mut buffer)
-            .await
-            .map_err(|e| crate::Error {
-                code: 500,
-                reason: e.to_string(),
-            })?;
+        let bytes_count = stream.read(&mut buffer).await.map_err(|e| crate::Error {
+            code: 500,
+            reason: e.to_string(),
+        })?;
         Ok(bytes_count)
     })
     .await
@@ -40,11 +37,11 @@ pub async fn handle_bytes(
     let mut temp_bytes = Vec::<u8>::new();
     let mut juri_stream = JuriStream::new();
 
-    let is_exist_body = loop {
+    let is_read_body_finish = loop {
         let (bytes_count, buffer) = read_buffer(stream, &config).await?;
 
         if bytes_count == 0 {
-            break false;
+            break None;
         } else {
             let mut flag_n = false;
             let mut flag_r = false;
@@ -90,6 +87,7 @@ pub async fn handle_bytes(
                             if bytes_count == index + 1 {
                                 break false;
                             }
+                            temp_bytes.clear();
                             // * * / * * 13 10 * * * * or 13 10 * * * *
                             let body_bytes = &mut buffer[(index + 1)..bytes_count].to_vec();
                             temp_bytes.append(body_bytes);
@@ -116,7 +114,11 @@ pub async fn handle_bytes(
             };
 
             if is_exist_body {
-                break true;
+                if bytes_count < BUFFER_SIZE {
+                    break Some(true);
+                } else {
+                    break Some(false);
+                }
             }
 
             if point_index == 0 {
@@ -126,28 +128,29 @@ pub async fn handle_bytes(
             }
         }
         if bytes_count < BUFFER_SIZE {
-            break false;
+            break None;
         }
     };
 
     juri_stream.header_end();
 
-    if is_exist_body {
+    if let Some(is_read_body_finish) = is_read_body_finish {
         let body_bytes = &mut temp_bytes.clone();
         juri_stream.handle_request_body_bytes(body_bytes).await;
-        loop {
-            let (bytes_count, buffer) = read_buffer(stream, &config).await?;
-            if bytes_count == 0 {
-                break;
-            } else {
-                let body_bytes = &mut buffer[..bytes_count].to_vec();
-                juri_stream.handle_request_body_bytes(body_bytes).await;
-            }
-            if bytes_count < BUFFER_SIZE {
-                break;
+        if is_read_body_finish == false {
+            loop {
+                let (bytes_count, buffer) = read_buffer(stream, &config).await?;
+                if bytes_count == 0 {
+                    break;
+                } else {
+                    let body_bytes = &mut buffer[..bytes_count].to_vec();
+                    juri_stream.handle_request_body_bytes(body_bytes).await;
+                }
+                if bytes_count < BUFFER_SIZE {
+                    break;
+                }
             }
         }
     }
-
     juri_stream.get_request()
 }
