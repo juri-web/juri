@@ -1,7 +1,7 @@
 use juri::{Request, Response};
 use std::fs;
 
-pub static TEMPLATE_PATH: &str = "./examples/template";
+pub static TEMPLATE_PATH: &str = "./example/template";
 
 pub fn upload_file(_request: &Request) -> juri::Result<Response> {
     let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/upload_file.html")).unwrap();

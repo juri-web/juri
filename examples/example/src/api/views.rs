@@ -2,7 +2,7 @@ use juri::{json::ResponseExt, Request, Response};
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 
-pub static TEMPLATE_PATH: &str = "./examples/template";
+pub static TEMPLATE_PATH: &str = "./example/template";
 
 // 首页
 pub fn handle_index(request: &Request) -> juri::Result<Response> {
