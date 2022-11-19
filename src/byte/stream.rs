@@ -12,6 +12,7 @@ use std::{
 
 fn handle_request_line_bytes(line_bytes: Vec<u8>) -> (String, String, String) {
     let line = String::from_utf8(line_bytes).unwrap();
+    println!("---@{}", line);
     let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
     let caps = re.captures(&line).unwrap();
     let method = caps
@@ -152,6 +153,16 @@ impl MultipartFormData {
                 let mut bytes = body_bytes[point_index..(index - 1)].to_vec();
                 if is_vec_equals(&boundary_start_vec, &bytes) {
                     if let Some(temp_form_data) = self.temp_form_data.as_mut() {
+                        let file_path =
+                            cache_file_path.join(temp_form_data.cache_file_name.clone());
+                        let file = OpenOptions::new()
+                            .write(true)
+                            .open(file_path.clone())
+                            .await
+                            .unwrap();
+                        let file_size = file.metadata().await.unwrap().len();
+                        file.set_len(file_size - 2).await.unwrap();
+
                         self.form_data_vec.push(temp_form_data.clone());
                         self.temp_form_data = None;
                     }
@@ -171,6 +182,16 @@ impl MultipartFormData {
                     point_index = index + 1;
                 } else if is_vec_equals(&boundary_end_vec, &bytes) {
                     if let Some(temp_form_data) = self.temp_form_data.as_mut() {
+                        let file_path =
+                            cache_file_path.join(temp_form_data.cache_file_name.clone());
+                        let file = OpenOptions::new()
+                            .write(true)
+                            .open(file_path.clone())
+                            .await
+                            .unwrap();
+                        let file_size = file.metadata().await.unwrap().len();
+                        file.set_len(file_size - 2).await.unwrap();
+
                         self.form_data_vec.push(temp_form_data.clone());
                         self.temp_form_data = None;
                     }
