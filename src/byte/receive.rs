@@ -85,7 +85,11 @@ pub async fn handle_bytes(
                     if flag_n && flag_r {
                         if index == point_index + 1 {
                             if bytes_count == index + 1 {
-                                break false;
+                                if bytes_count < BUFFER_SIZE {
+                                    break false;
+                                } else {
+                                    break true;
+                                }
                             }
                             temp_bytes.clear();
                             // * * / * * 13 10 * * * * or 13 10 * * * *
@@ -138,6 +142,22 @@ pub async fn handle_bytes(
         let body_bytes = &mut temp_bytes.clone();
         juri_stream.handle_request_body_bytes(body_bytes).await;
         if is_read_body_finish == false {
+            loop {
+                let (bytes_count, buffer) = read_buffer(stream, &config).await?;
+                if bytes_count == 0 {
+                    break;
+                } else {
+                    let body_bytes = &mut buffer[..bytes_count].to_vec();
+                    juri_stream.handle_request_body_bytes(body_bytes).await;
+                }
+                if bytes_count < BUFFER_SIZE {
+                    break;
+                }
+            }
+        }
+    } else if let Some(content_length) = juri_stream.header_map.get("Content-Length") {
+        // 处理读取 header 时，读取数据大小小于缓冲区大小，但是 header 已经读取完毕
+        if let Ok(_body_length) = content_length.parse::<usize>() {
             loop {
                 let (bytes_count, buffer) = read_buffer(stream, &config).await?;
                 if bytes_count == 0 {

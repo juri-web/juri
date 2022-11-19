@@ -12,7 +12,6 @@ use std::{
 
 fn handle_request_line_bytes(line_bytes: Vec<u8>) -> (String, String, String) {
     let line = String::from_utf8(line_bytes).unwrap();
-    println!("---@{}", line);
     let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
     let caps = re.captures(&line).unwrap();
     let method = caps
@@ -42,7 +41,7 @@ fn handle_header_bytes(header_bytes: Vec<u8>) -> (String, String) {
 
 pub struct JuriStream {
     request_line: Option<(String, String, String)>,
-    header_map: HashMap<String, String>,
+    pub header_map: HashMap<String, String>,
     body_bytes: Vec<u8>,
     multipart_form_data: Option<MultipartFormData>,
 }
