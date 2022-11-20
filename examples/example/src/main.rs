@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let current_dir = env::current_dir().unwrap();
     let static_file_plugin = StaticFilePlugin::new(
         vec!["/static".to_string()],
-        vec![current_dir.join("examples").join("static")],
+        vec![current_dir.join("example").join("static")],
     );
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 7878));
