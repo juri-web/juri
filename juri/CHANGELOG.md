@@ -1,3 +1,15 @@
+## 0.3.3 (2022-11-20)
+
+### Features
+
+macro：add get post macro
+
+### Bug Fixes
+
+stream: two more bytes when reading form-data
+
+stream: in some cases，failed to read the body
+
 ## 0.3.2 (2022-11-15)
 
 ### Bug Fixes
