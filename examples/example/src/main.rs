@@ -4,7 +4,7 @@ use std::{env, net::SocketAddr};
 
 fn init_router() -> Router {
     let mut router = Router::new();
-
+    router.route(api::handle_index());
     router.get("/", api::views::handle_index);
     router.get("/aa/bb", api::views::handle_index);
     router.get("/aa/:bb", api::views::handle_params);

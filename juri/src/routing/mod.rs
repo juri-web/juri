@@ -28,4 +28,11 @@ impl Router {
     pub fn post(&mut self, path: &str, handle: HandleFn) {
         self.post.push((HTTPMethod::GET, path.to_string(), handle));
     }
+
+    pub fn route(&mut self, route: Route) {
+        match route.0 {
+            HTTPMethod::GET => self.get(&route.1, route.2),
+            HTTPMethod::POST => self.post(&route.1, route.2),
+        }
+    }
 }

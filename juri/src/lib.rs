@@ -12,7 +12,9 @@ mod server;
 pub use config::Config;
 pub use error::{Error, ResponseAndError, Result};
 pub use plugin::{JuriPlugin, StaticFilePlugin};
-pub use request::Request;
+pub use request::{Request, HTTPMethod};
 pub use response::{Response, ResponseBody};
-pub use routing::Router;
+pub use routing::{Router, Route};
 pub use server::Server;
+
+pub use juri_macros::get;
