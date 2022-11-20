@@ -3,10 +3,17 @@ name = "juri-macros"
 version = "0.1.0"
 edition = "2021"
 
+authors = ["luoxiaozero <luoxiaozero@163.com>"]
+description = "juri macros"
+keywords = ["http", "macro", "juri"]
+homepage = "https://github.com/luoxiaozero/juri"
+repository = "https://github.com/luoxiaozero/juri"
+license = "MIT"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [lib]
 proc-macro = true
 
 [dependencies]
-syn = "1.0.103"
+syn = { version = "1.0.103", features = ["full"] }
 quote = "1.0.21"

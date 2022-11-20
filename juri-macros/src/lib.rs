@@ -2,8 +2,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use quote::ToTokens;
-use syn::AttributeArgs;
-use syn::{parse_macro_input, Item};
+use syn::{parse_macro_input, AttributeArgs, Item};
 
 #[proc_macro_attribute]
 pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -51,7 +50,6 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
     new_token_stream
 }
-
 
 #[proc_macro_attribute]
 pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
