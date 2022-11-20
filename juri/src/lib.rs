@@ -12,9 +12,10 @@ mod server;
 pub use config::Config;
 pub use error::{Error, ResponseAndError, Result};
 pub use plugin::{JuriPlugin, StaticFilePlugin};
-pub use request::{Request, HTTPMethod};
+pub use request::{HTTPMethod, Request};
 pub use response::{Response, ResponseBody};
-pub use routing::{Router, Route};
+pub use routing::{Route, Router};
 pub use server::Server;
 
+pub use async_std::main;
 pub use juri_macros::get;

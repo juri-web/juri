@@ -24,7 +24,7 @@ fn init_router() -> Router {
     router
 }
 
-#[async_std::main]
+#[juri::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let router = init_router();
 
