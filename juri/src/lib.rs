@@ -19,3 +19,4 @@ pub use server::Server;
 
 pub use async_std::main;
 pub use juri_macros::get;
+pub use juri_macros::post;
