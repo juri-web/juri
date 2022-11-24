@@ -40,32 +40,30 @@ pub async fn handle_bytes(
     let mut newline = Newline::new();
 
     let is_read_body_finish = loop {
-        let (bytes_count, mut buffer) = read_buffer(stream, &config).await?;
+        let (bytes_count, buffer) = read_buffer(stream, &config).await?;
 
         if bytes_count == 0 {
             break None;
-        } else {
-            newline.push(&mut buffer);
-
-            let is_exist_body = loop {
-                if let Some(header_bytes) = newline.next() {
-                    if header_bytes.is_empty() {
-                        break true;
-                    } 
-                    juri_stream.handle_request_header_bytes(header_bytes);
-                } else {
-                    break false;
-                }
-            };
-            
-            if is_exist_body {
-                if bytes_count < BUFFER_SIZE {
-                    break Some(true);
-                } else {
-                    break Some(false);
-                }
-            }
         }
+
+        let bytes = &mut buffer[..bytes_count].to_vec();
+        newline.push(bytes);
+
+        let is_exist_body = loop {
+            if let Some(header_bytes) = newline.next() {                                                
+                if header_bytes.is_empty() {
+                    break true;
+                }
+                juri_stream.handle_request_header_bytes(header_bytes);
+            } else {
+                break false;
+            }
+        };  
+
+        if is_exist_body {
+            break Some(bytes_count < BUFFER_SIZE);
+        }
+
         if bytes_count < BUFFER_SIZE {
             break None;
         }
@@ -82,31 +80,32 @@ pub async fn handle_bytes(
                 let (bytes_count, buffer) = read_buffer(stream, &config).await?;
                 if bytes_count == 0 {
                     break;
-                } else {
-                    let body_bytes = &mut buffer[..bytes_count].to_vec();
-                    juri_stream.handle_request_body_bytes(body_bytes).await;
                 }
+                let body_bytes = &mut buffer[..bytes_count].to_vec();
+                juri_stream.handle_request_body_bytes(body_bytes).await;
                 if bytes_count < BUFFER_SIZE {
                     break;
                 }
             }
-        }
-    } else if let Some(content_length) = juri_stream.header_map.get("Content-Length") {
-        // 处理读取 header 时，读取数据大小小于缓冲区大小，但是 header 已经读取完毕
-        if let Ok(_body_length) = content_length.parse::<usize>() {
-            loop {
-                let (bytes_count, buffer) = read_buffer(stream, &config).await?;
-                if bytes_count == 0 {
-                    break;
-                } else {
+        } else if let Some(content_length) = juri_stream.header_map.get("Content-Length") {
+            // 处理读取 header 时，读取数据大小小于缓冲区大小，但是 header 已经读取完毕
+            if let Ok(_body_length) = content_length.parse::<usize>() {
+                loop {
+                    let (bytes_count, buffer) = read_buffer(stream, &config).await?;
+                    if bytes_count == 0 {
+                        break;
+                    }
+                    
                     let body_bytes = &mut buffer[..bytes_count].to_vec();
                     juri_stream.handle_request_body_bytes(body_bytes).await;
-                }
-                if bytes_count < BUFFER_SIZE {
-                    break;
+
+                    if bytes_count < BUFFER_SIZE {
+                        break;
+                    }
                 }
             }
         }
     }
+
     juri_stream.get_request()
 }
