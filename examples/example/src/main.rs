@@ -1,4 +1,5 @@
 mod api;
+mod user;
 use juri::{Router, StaticFilePlugin};
 use std::{env, net::SocketAddr};
 
@@ -20,6 +21,8 @@ fn init_router() -> Router {
 
     router.post("/json/request", api::json::handle_request_json);
     router.post("/json/response", api::json::handle_response_json);
+
+    router.router(user::router());
 
     router
 }

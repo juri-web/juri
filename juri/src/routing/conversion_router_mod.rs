@@ -1,10 +1,44 @@
 use super::{MatchRoute, MatchRouter, Route};
-use crate::Router;
+use crate::{Router, HTTPMethod};
+
+fn route_summary_get(router: &Router) -> Vec<Route> {
+    let mut route_list;
+    if let Some(root_path) = &router.root {
+        route_list = vec![];
+        for route in router.get.iter() {
+            route_list.push((HTTPMethod::GET, format!("{}{}", root_path, route.1), route.2))
+        }
+    } else {
+        route_list = router.get.clone();
+    }
+    
+    for router in router.router.iter() {
+        route_list.append(&mut route_summary_get(router));
+    }
+    route_list
+}
+
+fn route_summary_post(router: &Router) -> Vec<Route> {
+    let mut route_list;
+    if let Some(root_path) = &router.root {
+        route_list = vec![];
+        for route in router.post.iter() {
+            route_list.push((HTTPMethod::POST, format!("{}{}", root_path, route.1), route.2))
+        }
+    } else {
+        route_list = router.post.clone();
+    }
+
+    for router in router.router.iter() {
+        route_list.append(&mut route_summary_get(router));
+    }
+    route_list
+}
 
 pub fn conversion_router(router: Router) -> MatchRouter {
     MatchRouter {
-        get: conversion_route_list(&router.get),
-        post: conversion_route_list(&router.post),
+        get: conversion_route_list(&route_summary_get(&router)),
+        post: conversion_route_list(&route_summary_post(&router)),
     }
 }
 
