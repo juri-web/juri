@@ -4,6 +4,9 @@ use async_std::fs::File;
 use async_std::{net::TcpStream, prelude::*};
 use std::sync::Arc;
 
+use self::status_code::status_code_to_text;
+mod status_code;
+
 pub const CRLF: &str = "\r\n";
 const BUFFER_SIZE: usize = 1024 * 2;
 
@@ -12,7 +15,7 @@ fn generate_response_header_bytes(
     response: &Response,
     config: &Arc<Config>,
 ) -> Vec<u8> {
-    let status = format!("HTTP/1.1 {} {}\r\n", response.status_code, "OK");
+    let status = format!("HTTP/1.1 {} {}\r\n", response.status_code, status_code_to_text(response.status_code));
     let server = "Server: Rust\r\n";
     let mut headers_str = format!("{}{}", status, server);
 
