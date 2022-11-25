@@ -1,3 +1,9 @@
+## 0.3.5 (2022-11-25)
+
+### Bug Fixes
+
+read: read body data
+
 ## 0.3.4 (2022-11-24)
 
 ### Features
