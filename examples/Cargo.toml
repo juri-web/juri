@@ -1,2 +1,2 @@
 [workspace]
-members = ["example"]
+members = ["example", "web-scoket"]
