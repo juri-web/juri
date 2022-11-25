@@ -50,7 +50,7 @@ pub async fn handle_bytes(
         newline.push(bytes);
 
         let is_exist_body = loop {
-            if let Some(header_bytes) = newline.next() {                                                
+            if let Some(header_bytes) = newline.next() {
                 if header_bytes.is_empty() {
                     break true;
                 }
@@ -58,7 +58,7 @@ pub async fn handle_bytes(
             } else {
                 break false;
             }
-        };  
+        };
 
         if is_exist_body {
             break Some(bytes_count < BUFFER_SIZE);
@@ -72,7 +72,9 @@ pub async fn handle_bytes(
     juri_stream.header_end();
 
     if let Some(is_read_body_finish) = is_read_body_finish {
+        let mut already_read_body_length: usize = 0;
         if let Some(body_bytes) = &mut newline.get_residue_bytes() {
+            already_read_body_length = body_bytes.len();
             juri_stream.handle_request_body_bytes(body_bytes).await;
         }
         if !is_read_body_finish {
@@ -89,18 +91,20 @@ pub async fn handle_bytes(
             }
         } else if let Some(content_length) = juri_stream.header_map.get("Content-Length") {
             // 处理读取 header 时，读取数据大小小于缓冲区大小，但是 header 已经读取完毕
-            if let Ok(_body_length) = content_length.parse::<usize>() {
-                loop {
-                    let (bytes_count, buffer) = read_buffer(stream, &config).await?;
-                    if bytes_count == 0 {
-                        break;
-                    }
-                    
-                    let body_bytes = &mut buffer[..bytes_count].to_vec();
-                    juri_stream.handle_request_body_bytes(body_bytes).await;
+            if let Ok(content_length) = content_length.parse::<usize>() {
+                if content_length != 0 && content_length > already_read_body_length {
+                    loop {
+                        let (bytes_count, buffer) = read_buffer(stream, &config).await?;
+                        if bytes_count == 0 {
+                            break;
+                        }
 
-                    if bytes_count < BUFFER_SIZE {
-                        break;
+                        let body_bytes = &mut buffer[..bytes_count].to_vec();
+                        juri_stream.handle_request_body_bytes(body_bytes).await;
+
+                        if bytes_count < BUFFER_SIZE {
+                            break;
+                        }
                     }
                 }
             }

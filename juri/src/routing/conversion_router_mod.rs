@@ -30,7 +30,7 @@ fn route_summary_post(router: &Router) -> Vec<Route> {
     }
 
     for router in router.router.iter() {
-        route_list.append(&mut route_summary_get(router));
+        route_list.append(&mut route_summary_post(router));
     }
     route_list
 }
