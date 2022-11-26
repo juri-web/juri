@@ -5,12 +5,14 @@ use std::{env, net::SocketAddr};
 
 fn init_router() -> Router {
     let mut router = Router::new();
-    router.route(api::handle_index());
-    router.get("/", api::views::handle_index);
-    router.get("/aa/bb", api::views::handle_index);
-    router.get("/aa/:bb", api::views::handle_params);
-    router.get("/aa/:bb/cc", api::views::handle_params);
-    router.get("/aa/:bb/:cc", api::views::handle_params);
+    router
+        .route(api::handle_index())
+        .route(api::handle_index_post());
+    router.at("/").get(api::views::handle_index);
+    router.at("/aa/bb").get(api::views::handle_index);
+    router.at("/aa/:bb").get(api::views::handle_params);
+    router.at("/aa/:bb/cc").get(api::views::handle_params);
+    router.at("/aa/:bb/:cc").get(api::views::handle_params);
 
     router.get("/mode", api::try_mode::handle_result_mode);
 
@@ -19,8 +21,12 @@ fn init_router() -> Router {
 
     router.get("/file/static", api::views::handle_static_file);
 
-    router.post("/json/request", api::json::handle_request_json);
-    router.post("/json/response", api::json::handle_response_json);
+    router
+        .at("/json/request")
+        .post(api::json::handle_request_json);
+    router
+        .at("/json/response")
+        .post(api::json::handle_response_json);
 
     router.router(user::router());
 
