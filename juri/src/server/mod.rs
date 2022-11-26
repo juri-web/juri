@@ -3,7 +3,7 @@ use crate::{
     cache::main::init_cache,
     plugin::JuriPlugin,
     routing::{conversion_router, match_route, MatchRouter, Router},
-    Config, Response, error::ResponseAndError,
+    Config, Response, error::ResponseAndError, ResponseBody,
 };
 use async_std::{
     net::{TcpListener, TcpStream},
@@ -11,7 +11,7 @@ use async_std::{
     sync::Arc,
 };
 use colored::*;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, collections::HashMap};
 
 pub struct Server {
     addr: SocketAddr,
@@ -110,7 +110,13 @@ impl Server {
                                 match response {
                                     Ok(response) => response,
                                     Err(err) => match err {
-                                        ResponseAndError::Error(_) => Response::new_500(),
+                                        ResponseAndError::Error(e) => {
+                                            Response {
+                                                status_code: e.code,
+                                                headers: HashMap::new(),
+                                                body: ResponseBody::None,
+                                            }
+                                        },
                                         ResponseAndError::Response(response) => response,
                                     },
                                 }
@@ -143,12 +149,12 @@ impl Server {
                 }
                 Err(e) => {
                     match e.code {
-                        405 => {
-                            let response = Response::new_405();
-                            send_stream(&mut stream, &config, None, &response).await;
-                        }
-                        500 => {
-                            let response = Response::new_500();
+                        100..=599 => {
+                            let response = Response {
+                                status_code: e.code,
+                                headers: HashMap::new(),
+                                body: ResponseBody::None,
+                            };
                             send_stream(&mut stream, &config, None, &response).await;
                         }
                         _ => {
