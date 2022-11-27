@@ -1,15 +1,21 @@
-use super::HandleFn;
-use crate::{request::HTTPMethod, Request};
+use crate::{request::HTTPMethod, response::HTTPHandler, Request};
 use regex::Regex;
 use std::{collections::HashMap, sync::Arc};
+use std::rc::Rc;
 
-pub type MatchRoute = (String, Vec<String>, HandleFn);
+#[derive(Clone)]
+pub struct MatchRoute {
+    pub path: String,
+    pub params: Vec<String>,
+    pub handler: Rc<dyn HTTPHandler>,
+}
+
 pub struct MatchRouter {
     pub get: Vec<MatchRoute>,
     pub post: Vec<MatchRoute>,
 }
 
-pub fn match_route(request: &mut Request, router: Arc<MatchRouter>) -> Option<HandleFn> {
+pub fn match_route(request: &mut Request, router: Arc<MatchRouter>) -> Option<Rc<dyn HTTPHandler>> {
     let route_list;
 
     match request.method {
@@ -18,9 +24,10 @@ pub fn match_route(request: &mut Request, router: Arc<MatchRouter>) -> Option<Ha
     }
 
     for route in route_list {
-        if let Some(map) = match_route_path(route.0.clone(), route.1.clone(), request.path.clone()) {
+        if let Some(map) = match_route_path(route.path.clone(), route.params.clone(), request.path.clone())
+        {
             request.params_map = map;
-            return Some(route.2);
+            return Some(route.handler.clone());
         }
     }
     None

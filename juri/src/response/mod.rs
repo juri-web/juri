@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::metadata;
 use std::path::PathBuf;
 mod into;
-pub use into::IntoResponse;
+pub use into::{IntoResponse, HTTPHandler};
 
 #[derive(Debug, Clone)]
 pub enum ResponseBody {

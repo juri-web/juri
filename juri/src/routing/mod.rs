@@ -1,11 +1,18 @@
-use crate::{request::HTTPMethod, Request, Response};
+use crate::{request::HTTPMethod, response::HTTPHandler};
+use std::rc::Rc;
 mod conversion_router_mod;
 mod match_router_mod;
 pub use conversion_router_mod::conversion_router;
 pub use match_router_mod::{match_route, match_route_path, MatchRoute, MatchRouter};
+mod at_path;
+pub use at_path::AtPath;
 
-type HandleFn = fn(request: &Request) -> crate::Result<Response>;
-pub type Route = (HTTPMethod, String, HandleFn);
+#[derive(Clone)]
+pub struct Route {
+    method: HTTPMethod,
+    path: String,
+    handler: Rc<dyn HTTPHandler + 'static>,
+}
 
 pub struct Router {
     root: Option<String>,
@@ -28,18 +35,8 @@ impl Router {
         self.root = Some(root.to_string());
     }
 
-    #[deprecated(since = "0.5.0", note = "Please use the at function instead")]
-    pub fn get(&mut self, path: &str, handle: HandleFn) {
-        self.get.push((HTTPMethod::GET, path.to_string(), handle));
-    }
-
-    #[deprecated(since = "0.5.0", note = "Please use the at function instead")]
-    pub fn post(&mut self, path: &str, handle: HandleFn) {
-        self.post.push((HTTPMethod::POST, path.to_string(), handle));
-    }
-
-    pub fn at<'a>(&'a mut self, path: &str) -> RouterAtPath<'a> {
-        RouterAtPath {
+    pub fn at<'a>(&'a mut self, path: &str) -> AtPath<'a> {
+        AtPath {
             router: self,
             path: path.to_string(),
         }
@@ -62,31 +59,10 @@ pub struct RouterRoute<'a> {
 
 impl<'a> RouterRoute<'a> {
     pub fn route(&mut self, route: Route) -> &mut Self {
-        match route.0 {
+        match route.method {
             HTTPMethod::GET => self.router.get.push(route),
             HTTPMethod::POST => self.router.post.push(route),
         }
-        self
-    }
-}
-
-pub struct RouterAtPath<'a> {
-    router: &'a mut Router,
-    path: String,
-}
-
-impl<'a> RouterAtPath<'a> {
-    pub fn get(&mut self, handle: HandleFn) -> &mut Self {
-        self.router
-            .get
-            .push((HTTPMethod::GET, self.path.clone(), handle));
-        self
-    }
-
-    pub fn post(&mut self, handle: HandleFn) -> &mut Self {
-        self.router
-            .post
-            .push((HTTPMethod::POST, self.path.clone(), handle));
         self
     }
 }

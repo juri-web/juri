@@ -49,8 +49,8 @@ pub async fn handle_request(
                 let mut response = match plugin_response {
                     Some(response) => response,
                     None => match match_route(&mut request, router) {
-                        Some(fun) => {
-                            let response: crate::Result<Response> = fun(&request);
+                        Some(handler) => {
+                            let response = handler.call(&request).await;
                             match response {
                                 Ok(response) => response,
                                 Err(err) => match err {
