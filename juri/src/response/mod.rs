@@ -77,29 +77,3 @@ impl Response {
         }
     }
 }
-
-impl Response {
-    pub fn new_404() -> Self {
-        Response {
-            status_code: 404,
-            headers: HashMap::new(),
-            body: ResponseBody::Text("".to_string()),
-        }
-    }
-
-    pub fn new_405() -> Self {
-        Response {
-            status_code: 405,
-            headers: HashMap::new(),
-            body: ResponseBody::None,
-        }
-    }
-
-    pub fn new_500() -> Self {
-        Response {
-            status_code: 500,
-            headers: HashMap::new(),
-            body: ResponseBody::None,
-        }
-    }
-}
