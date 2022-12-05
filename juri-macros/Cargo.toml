@@ -17,3 +17,5 @@ proc-macro = true
 [dependencies]
 syn = { version = "1.0.103", features = ["full"] }
 quote = "1.0.21"
+proc-macro-crate = "1.2.1"
+proc-macro2 = "1.0.47"
