@@ -3,7 +3,7 @@ use proc_macro_crate::{crate_name, FoundCrate};
 use quote::quote;
 use syn::Ident;
 
-pub(crate) fn get_crate_name(internal: bool) -> TokenStream {
+pub fn get_crate_name(internal: bool) -> TokenStream {
     if internal {
         quote! { crate }
     } else {

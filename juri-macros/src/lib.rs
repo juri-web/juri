@@ -1,8 +1,9 @@
 extern crate proc_macro;
+use generate::generate_struct;
 use proc_macro::TokenStream;
-use quote::quote;
-use quote::ToTokens;
-use syn::{parse_macro_input, AttributeArgs, Item, ItemFn, Result};
+use quote::{quote, ToTokens};
+use syn::{parse_macro_input, AttributeArgs, ItemFn};
+mod generate;
 mod utils;
 
 #[proc_macro_attribute]
@@ -12,44 +13,26 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut string = path.to_string();
     string = string[1..string.len() - 1].to_string();
 
-    let input = parse_macro_input!(item as Item);
-    let token_stream = input.to_token_stream();
+    match syn::parse::<ItemFn>(item) {
+        Ok(item_fn) => {
+            let vis = item_fn.vis.clone();
+            let ident = item_fn.sig.ident.clone();
+            let def_struct = generate_struct(item_fn);
+            let expanded = quote! {
+                #vis fn #ident() -> juri::Route {
+                    #def_struct
 
-    let mut token = token_stream.into_iter();
-    let mut is_appear_fn = false;
-    let mut is_appear_pub = false;
-    let fn_name = loop {
-        if let Some(data) = token.next() {
-            if data.to_string() == "fn" {
-                is_appear_fn = true;
-            } else if is_appear_fn {
-                break Some(data);
-            } else if data.to_string() == "pub" {
-                is_appear_pub = true;
-            }
-        } else {
-            break None;
+                    juri::Route {
+                        method: juri::HTTPMethod::POST,
+                        path: #string.to_string(),
+                        handler: #def_struct
+                    }
+                }
+            };
+            expanded.into()
         }
-    };
-    let new_token_stream;
-    if is_appear_pub {
-        new_token_stream = quote!(
-            pub fn #fn_name() -> juri::Route {
-                #input
-                (juri::HTTPMethod::GET, #string.to_string(), #fn_name)
-            }
-        )
-        .into();
-    } else {
-        new_token_stream = quote!(
-            fn #fn_name() -> juri::Route {
-                #input
-                (juri::HTTPMethod::GET, #string.to_string(), #fn_name)
-            }
-        )
-        .into();
+        Err(err) => err.into_compile_error().into(),
     }
-    new_token_stream
 }
 
 #[proc_macro_attribute]
@@ -59,60 +42,32 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
     let mut string = path.to_string();
     string = string[1..string.len() - 1].to_string();
 
-    let input = parse_macro_input!(item as ItemFn);
-    let token_stream = input.to_token_stream();
+    match syn::parse::<ItemFn>(item) {
+        Ok(item_fn) => {
+            let vis = item_fn.vis.clone();
+            let ident = item_fn.sig.ident.clone();
+            let def_struct = generate_struct(item_fn);
+            let expanded = quote! {
+                #vis fn #ident() -> juri::Route {
+                    #def_struct
 
-    let mut token = token_stream.into_iter();
-    let mut is_appear_fn = false;
-    let mut is_appear_pub = false;
-    let fn_name = loop {
-        if let Some(data) = token.next() {
-            if data.to_string() == "fn" {
-                is_appear_fn = true;
-            } else if is_appear_fn {
-                break Some(data);
-            } else if data.to_string() == "pub" {
-                is_appear_pub = true;
-            }
-        } else {
-            break None;
-        }
-    };
-    let new_token_stream;
-    if is_appear_pub {
-        new_token_stream = quote!(
-            pub fn #fn_name() -> juri::Route {
-                #input
-                juri::Route {
-                    method: juri::HTTPMethod::POST,
-                    path: #string.to_string(),
-                    handle
+                    juri::Route {
+                        method: juri::HTTPMethod::POST,
+                        path: #string.to_string(),
+                        handler: #def_struct
+                    }
                 }
-            }
-        )
-        .into();
-    } else {
-        new_token_stream = quote!(
-            fn #fn_name() -> juri::Route {
-                #input
-                (juri::HTTPMethod::POST, #string.to_string(), #fn_name)
-            }
-        )
-        .into();
+            };
+            expanded.into()
+        }
+        Err(err) => err.into_compile_error().into(),
     }
-    new_token_stream
 }
 
-
-fn generate_struct(input: TokenStream) -> Result<TokenStream> {
-    let crate_name = utils::get_crate_name(false);
-    let item_fn = syn::parse::<ItemFn>(input)?;
-    let vis = item_fn.vis;
-
-    // let def_struct = quote! {
-
-    // }
-    let expanded = quote! {
-    };
-    Ok(expanded.into())
+#[proc_macro_attribute]
+pub fn handler(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    match syn::parse::<ItemFn>(item) {
+        Ok(item_fn) => generate_struct(item_fn).into(),
+        Err(err) => err.into_compile_error().into(),
+    }
 }
