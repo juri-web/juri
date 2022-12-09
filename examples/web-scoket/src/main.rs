@@ -1,10 +1,10 @@
-use juri::{get, Response, Router, StaticFilePlugin};
+
+use juri::{get, IntoResponse, Router, StaticFilePlugin, Response};
 use std::{env, fs, net::SocketAddr};
 pub static TEMPLATE_PATH: &str = "./web-scoket/template";
 
-
 #[get("/ws")]
-pub fn handle_ws(_request: &juri::Request) -> juri::Result<Response> {
+pub fn handle_ws(_request: &juri::Request) -> juri::Result<impl IntoResponse> {
     let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/index.html")).unwrap();
     Ok(Response::html_str(&content))
 }

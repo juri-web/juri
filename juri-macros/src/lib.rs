@@ -25,7 +25,7 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
                     juri::Route {
                         method: juri::HTTPMethod::POST,
                         path: #string.to_string(),
-                        handler: #def_struct
+                        handler: std::rc::Rc::new(#ident)
                     }
                 }
             };
@@ -54,7 +54,7 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
                     juri::Route {
                         method: juri::HTTPMethod::POST,
                         path: #string.to_string(),
-                        handler: #def_struct
+                        handler: std::rc::Rc::new(#ident)
                     }
                 }
             };

@@ -14,12 +14,16 @@ fn init_router() -> Router {
     router.at("/aa/:bb/cc").get(api::views::handle_params);
     router.at("/aa/:bb/:cc").get(api::views::handle_params);
 
-    router.get("/mode", api::try_mode::handle_result_mode);
+    router.at("/mode").get(api::try_mode::handle_result_mode);
 
-    router.get("/upload/file", api::upload::upload_file);
-    router.post("/upload/file2", api::upload::post_upload_file);
+    router.at("/upload/file").get(api::upload::upload_file);
+    router
+        .at("/upload/file2")
+        .post(api::upload::post_upload_file);
 
-    router.get("/file/static", api::views::handle_static_file);
+    router
+        .at("/file/static")
+        .get(api::views::handle_static_file);
 
     router
         .at("/json/request")

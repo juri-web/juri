@@ -9,9 +9,9 @@ pub use at_path::AtPath;
 
 #[derive(Clone)]
 pub struct Route {
-    method: HTTPMethod,
-    path: String,
-    handler: Rc<dyn HTTPHandler + 'static>,
+    pub method: HTTPMethod,
+    pub path: String,
+    pub handler: Rc<dyn HTTPHandler + 'static>,
 }
 
 pub struct Router {
