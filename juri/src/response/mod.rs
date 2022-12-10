@@ -80,7 +80,7 @@ impl Response {
 
 
 impl IntoResponse for Response {
-    fn into_response(self) -> Response {
-        self
+    fn into_response(&self) -> Response {
+        self.clone()
     }
 }

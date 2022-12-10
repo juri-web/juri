@@ -54,7 +54,7 @@ impl WebSocket {
 }
 
 impl IntoResponse for WebSocket {
-    fn into_response(self) -> crate::Response {
+    fn into_response(&self) -> crate::Response {
         todo!()
     }
 }
