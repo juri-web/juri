@@ -4,17 +4,17 @@ use std::rc::Rc;
 
 type Handler = fn(request: &Request) -> crate::Result<Response>;
 
-pub struct AtPath<'a> {
+pub struct RouterAtPath<'a> {
     pub router: &'a mut Router,
     pub path: String,
 }
 
-impl<'a> AtPath<'a> {
+impl<'a> RouterAtPath<'a> {
     pub fn get(&mut self, handler: Handler) -> &mut Self {
         self.router.get.push(Route {
             method: HTTPMethod::GET,
             path: self.path.to_string(),
-            handler: Rc::new(AtPathHandler { handler }),
+            handler: Rc::new(RouterAtPathHandler { handler }),
         });
         self
     }
@@ -23,18 +23,18 @@ impl<'a> AtPath<'a> {
         self.router.post.push(Route {
             method: HTTPMethod::POST,
             path: self.path.to_string(),
-            handler: Rc::new(AtPathHandler { handler }),
+            handler: Rc::new(RouterAtPathHandler { handler }),
         });
         self
     }
 }
 
-struct AtPathHandler {
+struct RouterAtPathHandler {
     handler: Handler,
 }
 
 #[async_trait]
-impl HTTPHandler for AtPathHandler {
+impl HTTPHandler for RouterAtPathHandler {
     async fn call(&self, request: &Request) -> crate::Result<Box<dyn IntoResponse>> {
         match (self.handler)(request) {
             Ok(v) => Ok(Box::new(v)),

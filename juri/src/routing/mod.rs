@@ -1,18 +1,13 @@
-use crate::{request::HTTPMethod, response::HTTPHandler};
-use std::rc::Rc;
-mod conversion_router_mod;
-mod match_router_mod;
-pub use conversion_router_mod::conversion_router;
-pub use match_router_mod::{match_route, match_route_path, MatchRoute, MatchRouter};
 mod at_path;
-pub use at_path::AtPath;
+mod conversion_router;
+mod match_router;
+mod route;
 
-#[derive(Clone)]
-pub struct Route {
-    pub method: HTTPMethod,
-    pub path: String,
-    pub handler: Rc<dyn HTTPHandler + 'static>,
-}
+use crate::request::HTTPMethod;
+pub use at_path::RouterAtPath;
+pub use conversion_router::conversion_router;
+pub use match_router::{match_route, match_route_path, MatchRoute, MatchRouter};
+pub use route::Route;
 
 pub struct Router {
     root: Option<String>,
@@ -35,8 +30,8 @@ impl Router {
         self.root = Some(root.to_string());
     }
 
-    pub fn at<'a>(&'a mut self, path: &str) -> AtPath<'a> {
-        AtPath {
+    pub fn at<'a>(&'a mut self, path: &str) -> RouterAtPath<'a> {
+        RouterAtPath {
             router: self,
             path: path.to_string(),
         }
