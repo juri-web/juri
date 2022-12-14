@@ -64,9 +64,10 @@ impl<'a> RouterRoute<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::{Request, Response, Router};
+    use crate::{Request, Response, Router, handler};
 
-    pub fn handle_index_at(_request: &Request) -> crate::Result<Response> {
+    #[handler(internal)]
+    pub async fn handle_index_at(_request: &Request) -> crate::Result<Response> {
         Ok(Response::html_str("Hello Juri"))
     }
 

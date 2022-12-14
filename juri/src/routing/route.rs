@@ -1,10 +1,9 @@
-
 use crate::{request::HTTPMethod, response::HTTPHandler};
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Clone)]
 pub struct Route {
     pub method: HTTPMethod,
     pub path: String,
-    pub handler: Rc<dyn HTTPHandler + 'static>,
+    pub handler: Arc<dyn HTTPHandler + 'static>,
 }
