@@ -1,10 +1,11 @@
-use juri::{json::ResponseExt, Request, Response};
+use juri::{json::ResponseExt, Request, Response, handler};
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 
 pub static TEMPLATE_PATH: &str = "./example/template";
 
 // 首页
+#[handler]
 pub fn handle_index(request: &Request) -> juri::Result<Response> {
     println!(
         "query a={}",
@@ -22,6 +23,7 @@ struct Point {
     y: i32,
 }
 
+#[handler]
 pub fn handle_params(request: &Request) -> juri::Result<Response> {
     let point = Point { x: 2, y: 3 };
     println!(
@@ -34,6 +36,7 @@ pub fn handle_params(request: &Request) -> juri::Result<Response> {
 }
 
 // 首页
+#[handler]
 pub fn handle_static_file(request: &Request) -> juri::Result<Response> {
     println!("fill path={}", request.full_path);
     let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/static_file.html")).unwrap();

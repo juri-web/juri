@@ -1,4 +1,4 @@
-use juri::{Request, Response};
+use juri::{Request, Response, handler};
 
 fn result(flag: bool) -> juri::Result<String> {
     if flag {
@@ -8,6 +8,7 @@ fn result(flag: bool) -> juri::Result<String> {
     }
 }
 
+#[handler]
 pub fn handle_result_mode(request: &Request) -> juri::Result<Response> {
     let flag = request.query("flag").map_or(false, |_v| true);
     let point = result(flag)?;

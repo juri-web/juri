@@ -4,7 +4,6 @@ use quote::quote;
 use syn::Ident;
 
 pub fn get_crate_name(internal: bool) -> TokenStream {
-    println!("1 {}", internal);
     if internal {
         quote! { crate }
     } else {
