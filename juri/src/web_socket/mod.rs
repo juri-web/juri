@@ -1,4 +1,4 @@
-use crate::{response::IntoResponse, HTTPMethod, Request};
+use crate::{HTTPMethod, Request};
 mod stream;
 use futures_util::{future::BoxFuture, FutureExt};
 use std::future::Future;
@@ -53,24 +53,18 @@ impl WebSocket {
     }
 }
 
-impl IntoResponse for WebSocket {
-    fn into_response(&self) -> crate::Response {
-        todo!()
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::WebSocket;
-    use crate::{response::IntoResponse, Request};
+    use crate::{Request, Response};
     use std::any::{Any, TypeId};
 
-    fn test_handle_success(request: &Request) -> crate::Result<impl IntoResponse> {
+    fn test_handle_success(request: &Request) -> crate::Result<Response> {
         let mut ws = WebSocket::upgrader(&request).unwrap();
 
         ws.on(|_stream| async {});
 
-        Ok(ws)
+        Ok(Response::html_str(""))
     }
 
     #[test]
@@ -88,10 +82,9 @@ mod test {
 
         let into = test_handle_success(&request).unwrap();
         println!(
-            "{:?} {:?} {:?}",
+            "{:?} {:?}",
             TypeId::of::<WebSocket>(),
             into.type_id(),
-            TypeId::of::<dyn IntoResponse>()
         );
     }
 

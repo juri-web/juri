@@ -3,7 +3,7 @@ use crate::{
     error::ResponseAndError,
     plugin::JuriPlugin,
     routing::{match_route, MatchRouter},
-    Config, Response, ResponseBody, IntoResponse,
+    Config, Response, ResponseBody,
 };
 use async_std::{net::TcpStream, sync::Arc};
 use colored::*;
@@ -52,14 +52,14 @@ pub async fn handle_request(
                         Some(handler) => {
                             let response = handler.call(&request).await;
                             match response {
-                                Ok(response) => response.into_response(),
+                                Ok(response) => response,
                                 Err(err) => match err {
                                     ResponseAndError::Error(e) => Response {
                                         status_code: e.code,
                                         headers: HashMap::new(),
                                         body: ResponseBody::None,
                                     },
-                                    ResponseAndError::Response(response) => response.into_response(),
+                                    ResponseAndError::Response(response) => response,
                                 },
                             }
                         }

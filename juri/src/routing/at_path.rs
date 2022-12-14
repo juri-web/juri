@@ -1,4 +1,4 @@
-use crate::{response::HTTPHandler, HTTPMethod, IntoResponse, Request, Response, Route, Router};
+use crate::{response::HTTPHandler, HTTPMethod, Request, Response, Route, Router};
 use async_trait::async_trait;
 use std::rc::Rc;
 
@@ -35,10 +35,7 @@ struct RouterAtPathHandler {
 
 #[async_trait]
 impl HTTPHandler for RouterAtPathHandler {
-    async fn call(&self, request: &Request) -> crate::Result<Box<dyn IntoResponse>> {
-        match (self.handler)(request) {
-            Ok(v) => Ok(Box::new(v)),
-            Err(e) => Err(e),
-        }
+    async fn call(&self, request: &Request) -> crate::Result<Response> {
+        (self.handler)(request)
     }
 }

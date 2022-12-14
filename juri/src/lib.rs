@@ -14,7 +14,7 @@ pub use config::Config;
 pub use error::{Error, ResponseAndError, Result};
 pub use plugin::{JuriPlugin, StaticFilePlugin};
 pub use request::{HTTPMethod, Request};
-pub use response::{HTTPHandler, Response, ResponseBody, IntoResponse};
+pub use response::{HTTPHandler, Response, ResponseBody};
 pub use routing::{Route, Router};
 pub use server::Server;
 pub use web_socket::WebSocket;

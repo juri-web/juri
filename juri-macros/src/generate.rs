@@ -25,7 +25,7 @@ pub fn generate_struct(item_fn: ItemFn) -> TokenStream {
             async fn call(&self, request: &#crate_name::Request) -> #crate_name::Result<#crate_name::Response> {
                 #item_fn
                 let res = #ident(&request)#call_await;
-                res.map(|v| v.into_response())
+                res
             }
         }
     };

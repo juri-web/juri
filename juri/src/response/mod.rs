@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs::metadata;
 use std::path::PathBuf;
 mod into;
-pub use into::{IntoResponse, HTTPHandler};
+pub use into::HTTPHandler;
 
 #[derive(Debug, Clone)]
 pub enum ResponseBody {
@@ -75,12 +75,5 @@ impl Response {
             ResponseBody::Path(path) => ResponseBodyByte::File(path.clone()),
             ResponseBody::None => ResponseBodyByte::None,
         }
-    }
-}
-
-
-impl IntoResponse for Response {
-    fn into_response(&self) -> Response {
-        self.clone()
     }
 }
