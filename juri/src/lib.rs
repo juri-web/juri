@@ -17,7 +17,6 @@ pub use request::{HTTPMethod, Request};
 pub use response::{HTTPHandler, Response, ResponseBody};
 pub use routing::{Route, Router};
 pub use server::Server;
-pub use web_socket::WebSocket;
 
 pub use async_std::main;
 pub use async_trait::async_trait;

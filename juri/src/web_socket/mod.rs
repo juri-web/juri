@@ -1,74 +1,38 @@
-use crate::{HTTPMethod, Request};
+mod request;
+mod response;
 mod stream;
-use futures_util::{future::BoxFuture, FutureExt};
-use std::future::Future;
-use stream::WebSocketStream;
 
-type BoxWebSocketHandler =
-    Box<dyn FnOnce(WebSocketStream) -> BoxFuture<'static, ()> + Send + Sync + 'static>;
+use crate::Request;
+use async_trait::async_trait;
+pub use request::WSRequest;
+pub use response::WSResponse;
 
-pub struct WebSocket {
-    callback: Option<BoxWebSocketHandler>,
-}
-
-impl WebSocket {
-    pub fn upgrader(request: &Request) -> crate::Result<Self> {
-        if request.method != HTTPMethod::GET {
-            Err(crate::Error {
-                code: 405,
-                reason: "Method Not Allowed".to_string(),
-            })?
-        }
-
-        if request.protocol_and_version != "HTTP/1.1" {
-            Err(crate::Error {
-                code: 406,
-                reason: "Not Acceptable".to_owned(),
-            })?;
-        }
-
-        if let Some(connection) = request.header("Connection") {
-            if connection == "Upgrade" {
-                if let Some(upgrade) = request.header("Upgrade") {
-                    if upgrade == "websocket" {
-                        return Ok(WebSocket { callback: None });
-                    }
-                }
-            }
-        }
-        Err(crate::Error {
-            code: 406,
-            reason: "Not Acceptable".to_owned(),
-        })?
-    }
-}
-
-impl WebSocket {
-    pub fn on<F, Fut>(&mut self, callback: F)
+#[async_trait]
+pub trait WSHandler {
+    async fn call<WS>(&self, request: &Request) -> crate::Result<WSResponse>
     where
-        F: FnOnce(WebSocketStream) -> Fut + Send + Sync + 'static,
-        Fut: Future + Send + 'static,
-    {
-        self.callback = Some(Box::new(|stream| (callback)(stream).map(|_| ()).boxed()));
-    }
+        WS: WSRequest;
 }
 
 #[cfg(test)]
 mod test {
-    use super::WebSocket;
-    use crate::{Request, Response};
-    use std::any::{Any, TypeId};
+    use super::{WSRequest, WSResponse};
+    use crate::Request;
 
-    fn test_handle_success(request: &Request) -> crate::Result<Response> {
-        let mut ws = WebSocket::upgrader(&request).unwrap();
+    fn test_handle_success(request: &Request) -> crate::Result<WSResponse> {
+        let mut ws = request.upgrader().unwrap();
 
-        ws.on(|_stream| async {});
+        ws.on(|_stream| async {
+            loop {
+                
+            }
+        });
 
-        Ok(Response::html_str(""))
+        Ok(ws)
     }
 
     #[test]
-    fn test_success_type_id() {
+    fn test_success() {
         let mut request = Request::new();
 
         request.protocol_and_version = "HTTP/1.1".to_string();
@@ -80,33 +44,7 @@ mod test {
             .header_map
             .insert("Upgrade".to_string(), "websocket".to_string());
 
-        let into = test_handle_success(&request).unwrap();
-        println!(
-            "{:?} {:?}",
-            TypeId::of::<WebSocket>(),
-            into.type_id(),
-        );
-    }
 
-    #[test]
-    fn test_success_type() {
-        let mut request = Request::new();
-
-        request.protocol_and_version = "HTTP/1.1".to_string();
-
-        request
-            .header_map
-            .insert("Connection".to_string(), "Upgrade".to_string());
-        request
-            .header_map
-            .insert("Upgrade".to_string(), "websocket".to_string());
-
-        let into = test_handle_success(&request).unwrap();
-
-        if let Some(_ws) = <dyn Any>::downcast_ref::<WebSocket>(&into) {
-            println!("is WebSocket");
-        } else {
-            println!("not WebSocket");
-        }
+        let _ws_response = test_handle_success(&request).unwrap();
     }
 }
