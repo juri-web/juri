@@ -1,0 +1,209 @@
+use async_std::{io::ReadExt, net::TcpStream};
+use byteorder::{NetworkEndian, ReadBytesExt};
+use std::io::{Cursor, Read};
+
+pub enum OpCode {
+    /// 0x0
+    Continue,
+    /// 0x1
+    Text,
+    /// 0x2
+    Binary,
+    /// 0x8
+    Close,
+    /// 0x9
+    Ping,
+    /// 0xa
+    Pong,
+}
+
+impl From<u8> for OpCode {
+    fn from(byte: u8) -> OpCode {
+        use self::OpCode::*;
+        match byte {
+            0 => Continue,
+            1 => Text,
+            2 => Binary,
+            8 => Close,
+            9 => Ping,
+            10 => Pong,
+            _ => panic!("Bug: OpCode out of range"),
+        }
+    }
+}
+
+pub struct FrameHeader {
+    pub fin: bool,
+    rsv1: bool,
+    rsv2: bool,
+    rsv3: bool,
+    pub opcode: OpCode,
+
+    payload_length: u64,
+    masking_key: Option<u32>,
+}
+
+impl Default for FrameHeader {
+    fn default() -> Self {
+        FrameHeader {
+            fin: true,
+            rsv1: false,
+            rsv2: false,
+            rsv3: false,
+            opcode: OpCode::Close,
+            payload_length: 0,
+            masking_key: None,
+        }
+    }
+}
+
+impl FrameHeader {
+    fn parse(cursor: &mut Cursor<Vec<u8>>) -> std::result::Result<FrameHeader, crate::Error> {
+        let (first, second) = {
+            let mut head = [0u8; 2];
+            let count = cursor.read(&mut head).map_err(|e| crate::Error {
+                code: 400,
+                reason: e.to_string(),
+            })?;
+            if count != 2 {
+                return Err(crate::Error {
+                    code: 400,
+                    reason: "Web Sccoket parse FIN failed".to_string(),
+                });
+            }
+            (head[0], head[1])
+        };
+
+        let fin = first & 0x80 != 0;
+
+        let rsv1 = first & 0x40 != 0;
+        let rsv2 = first & 0x20 != 0;
+        let rsv3 = first & 0x10 != 0;
+
+        let opcode = OpCode::from(first & 0x0F);
+
+        let mask = second & 0x80 != 0;
+
+        let payload_length: u64 = {
+            let length_byte = second & 0x7F;
+
+            match length_byte {
+                127 => cursor
+                    .read_u64::<NetworkEndian>()
+                    .map_err(|e| crate::Error {
+                        code: 400,
+                        reason: e.to_string(),
+                    })?,
+                126 => cursor
+                    .read_u16::<NetworkEndian>()
+                    .map_err(|e| crate::Error {
+                        code: 400,
+                        reason: e.to_string(),
+                    })?
+                    .into(),
+                length => length.into(),
+            }
+        };
+
+        let masking_key = if mask {
+            Some(
+                cursor
+                    .read_u32::<NetworkEndian>()
+                    .map_err(|e| crate::Error {
+                        code: 400,
+                        reason: e.to_string(),
+                    })?,
+            )
+        } else {
+            None
+        };
+        Ok(FrameHeader {
+            fin,
+            rsv1,
+            rsv2,
+            rsv3,
+            opcode,
+
+            payload_length,
+            masking_key,
+        })
+    }
+}
+
+const BUFFER_SIZE: usize = 1024 * 2;
+
+pub struct Frame {
+    pub header: FrameHeader,
+    pub payload: Vec<u8>,
+}
+
+impl Frame {
+    pub fn pong(payload: Vec<u8>) -> Frame {
+        Frame {
+            header: FrameHeader {
+                opcode: OpCode::Pong,
+                ..FrameHeader::default()
+            },
+            payload,
+        }
+    }
+
+    pub fn ping(payload: Vec<u8>) -> Frame {
+        Frame {
+            header: FrameHeader {
+                opcode: OpCode::Ping,
+                ..FrameHeader::default()
+            },
+            payload,
+        }
+    }
+
+    /// Create a new Close control frame.
+    #[inline]
+    pub fn close() -> Frame {
+        Frame {
+            header: FrameHeader::default(),
+            payload: vec![],
+        }
+    }
+}
+
+impl Frame {
+    pub async fn read_frame(stream: &mut TcpStream) -> std::result::Result<Frame, crate::Error> {
+        let frame_bytes = Frame::read_stream(stream).await?;
+        Frame::parse(frame_bytes).await
+    }
+
+    async fn read_stream(stream: &mut TcpStream) -> std::result::Result<Vec<u8>, crate::Error> {
+        let mut frame_bytes = vec![];
+        loop {
+            let mut buffer = vec![0u8; BUFFER_SIZE];
+
+            let bytes_count = stream.read(&mut buffer).await.map_err(|e| crate::Error {
+                code: 500,
+                reason: e.to_string(),
+            })?;
+
+            if bytes_count == 0 {
+                break;
+            }
+
+            if bytes_count < BUFFER_SIZE {
+                frame_bytes.append(&mut buffer[..bytes_count].to_vec());
+                break;
+            } else {
+                frame_bytes.append(&mut buffer);
+            }
+        }
+
+        Ok(frame_bytes)
+    }
+
+    async fn parse(bytes: Vec<u8>) -> std::result::Result<Frame, crate::Error> {
+        let mut cursor = Cursor::new(bytes);
+        let header = FrameHeader::parse(&mut cursor)?;
+        let mut payload = vec![];
+        cursor.read_to_end(&mut payload);
+        Ok(Frame { header, payload })
+    }
+}

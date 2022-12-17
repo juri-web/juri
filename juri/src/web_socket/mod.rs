@@ -1,3 +1,5 @@
+mod frame;
+mod message;
 mod request;
 mod response;
 mod stream;
@@ -16,15 +18,26 @@ pub trait WSHandler {
 
 #[cfg(test)]
 mod test {
-    use super::{WSRequest, WSResponse};
+    use super::{message::Message, WSRequest, WSResponse};
     use crate::Request;
 
     fn test_handle_success(request: &Request) -> crate::Result<WSResponse> {
-        let mut ws = request.upgrader().unwrap();
+        let mut ws = request.upgrader()?;
 
-        ws.on(|_stream| async {
+        println!("upgrader success");
+
+        ws.on(|mut stream| async move {
             loop {
-                
+                let message = stream.read().await.unwrap();
+                match message {
+                    Message::Text(_) => todo!(),
+                    Message::Binary(_) => todo!(),
+                    Message::Ping(_) => todo!(),
+                    Message::Pong(_) => todo!(),
+                    Message::Close => {
+                        return;
+                    }
+                }
             }
         });
 
@@ -43,7 +56,6 @@ mod test {
         request
             .header_map
             .insert("Upgrade".to_string(), "websocket".to_string());
-
 
         let _ws_response = test_handle_success(&request).unwrap();
     }

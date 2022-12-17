@@ -1,11 +1,11 @@
 use crate::Response;
 
-use super::stream::WebSocketStream;
+use super::stream::WSStream;
 use futures_util::{future::BoxFuture, FutureExt};
 use std::{collections::HashMap, future::Future};
 
 type BoxWebSocketHandler =
-    Box<dyn FnOnce(WebSocketStream) -> BoxFuture<'static, ()> + Send + Sync + 'static>;
+    Box<dyn FnOnce(WSStream) -> BoxFuture<'static, ()> + Send + Sync + 'static>;
 
 pub struct WSResponse {
     response: Response,
@@ -34,7 +34,7 @@ impl WSResponse {
 
     pub fn on<F, Fut>(&mut self, callback: F)
     where
-        F: FnOnce(WebSocketStream) -> Fut + Send + Sync + 'static,
+        F: FnOnce(WSStream) -> Fut + Send + Sync + 'static,
         Fut: Future + Send + 'static,
     {
         self.callback = Some(Box::new(|stream| (callback)(stream).map(|_| ()).boxed()));
