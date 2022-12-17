@@ -31,7 +31,7 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
                     #def_struct
 
                     juri::Route {
-                        method: juri::HTTPMethod::POST,
+                        method: juri::HTTPMethod::GET,
                         path: #string.to_string(),
                         handler: std::sync::Arc::new(#ident)
                     }
