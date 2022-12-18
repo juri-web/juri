@@ -187,7 +187,7 @@ impl Frame {
     pub fn text(text: String) -> Frame {
         Frame {
             header: FrameHeader {
-                opcode: OpCode::Pong,
+                opcode: OpCode::Text,
                 ..FrameHeader::default()
             },
             payload: text.as_bytes().to_vec(),
@@ -197,7 +197,7 @@ impl Frame {
     pub fn binary(binary: Vec<u8>) -> Frame {
         Frame {
             header: FrameHeader {
-                opcode: OpCode::Pong,
+                opcode: OpCode::Binary,
                 ..FrameHeader::default()
             },
             payload: binary,
