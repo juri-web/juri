@@ -2,6 +2,7 @@ use async_std::{io::ReadExt, net::TcpStream};
 use byteorder::{NetworkEndian, ReadBytesExt};
 use std::io::{Cursor, Read};
 
+#[derive(Clone)]
 pub enum OpCode {
     /// 0x0
     Continue,
@@ -32,6 +33,20 @@ impl From<u8> for OpCode {
     }
 }
 
+impl From<OpCode> for u8 {
+    fn from(opcode: OpCode) -> Self {
+        use self::OpCode::*;
+        match opcode {
+            Continue => 0,
+            Text => 1,
+            Binary => 2,
+            Close => 8,
+            Ping => 9,
+            Pong => 10,
+        }
+    }
+}
+
 pub struct FrameHeader {
     pub fin: bool,
     rsv1: bool,
@@ -39,6 +54,7 @@ pub struct FrameHeader {
     rsv3: bool,
     pub opcode: OpCode,
 
+    #[warn(dead_code)]
     payload_length: u64,
     pub masking_key: Option<[u8; 4]>,
 }
@@ -131,6 +147,33 @@ impl FrameHeader {
             masking_key,
         })
     }
+
+    fn format(&self, payload_length: u64) -> Vec<u8> {
+        let opcode: u8 = self.opcode.clone().into();
+        let mut header_bytes = vec![];
+        let one = {
+            opcode
+                | if self.fin { 0x80 } else { 0 }
+                | if self.rsv1 { 0x40 } else { 0 }
+                | if self.rsv2 { 0x20 } else { 0 }
+                | if self.rsv3 { 0x10 } else { 0 }
+        };
+
+        header_bytes.push(one);
+        if payload_length < 126 {
+            header_bytes.push(payload_length as u8);
+        } else if payload_length < 65536 {
+            header_bytes.push(0x7e);
+            let mut bytes = (payload_length as u16).to_le_bytes().to_vec();
+            header_bytes.append(&mut bytes);
+        } else {
+            header_bytes.push(0x7f);
+            let mut bytes = (payload_length as u64).to_le_bytes().to_vec();
+            header_bytes.append(&mut bytes);
+        }
+
+        header_bytes
+    }
 }
 
 const BUFFER_SIZE: usize = 1024 * 2;
@@ -141,6 +184,26 @@ pub struct Frame {
 }
 
 impl Frame {
+    pub fn text(text: String) -> Frame {
+        Frame {
+            header: FrameHeader {
+                opcode: OpCode::Pong,
+                ..FrameHeader::default()
+            },
+            payload: text.as_bytes().to_vec(),
+        }
+    }
+
+    pub fn binary(binary: Vec<u8>) -> Frame {
+        Frame {
+            header: FrameHeader {
+                opcode: OpCode::Pong,
+                ..FrameHeader::default()
+            },
+            payload: binary,
+        }
+    }
+
     pub fn pong(payload: Vec<u8>) -> Frame {
         Frame {
             header: FrameHeader {
@@ -210,6 +273,12 @@ impl Frame {
         Ok(Frame { header, payload })
     }
 
+    pub fn format(&self) -> Vec<u8> {
+        let mut bytes = self.header.format(self.payload.len().try_into().unwrap());
+        bytes.append(&mut self.payload.clone());
+        bytes
+    }
+
     /// https://www.rfc-editor.org/rfc/rfc6455#section-5.3
     pub fn apply_mask(&mut self) {
         if let Some(masking_key) = self.header.masking_key {
@@ -219,4 +288,15 @@ impl Frame {
             }
         }
     }
+}
+
+
+#[test]
+fn test() {
+    let a: u16 = 12;
+    println!("{:#?}", a.to_be_bytes());
+
+    let mut a: Vec<u8> = vec![];
+    a.append(&mut vec![1, 2]);
+    println!("{:#?}", a);
 }

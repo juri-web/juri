@@ -13,6 +13,7 @@ pub fn handle_ws(request: &juri::Request) -> juri::Result<WSResponse> {
             match message {
                 WSMessage::Text(text) => {
                     println!("ws test: {}", text);
+                    stream.send(WSMessage::Text("hi".to_string())).await.unwrap();
                 },
                 WSMessage::Binary(_) => todo!(),
                 WSMessage::Ping(_) => todo!(),

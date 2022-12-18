@@ -2,7 +2,7 @@ use super::{
     frame::{Frame, OpCode},
     message::{IncompleteMessage, IncompleteMessageType, Message},
 };
-use async_std::net::TcpStream;
+use async_std::{net::TcpStream, io::WriteExt};
 
 /// 参考 https://github.com/snapview/tungstenite-rs
 pub struct WSStream {
@@ -60,5 +60,19 @@ impl WSStream {
                 OpCode::Pong => return Ok(Message::Pong(frame.payload)),
             }
         }
+    }
+
+    pub async fn send(&mut self, message: Message) -> Result<(), crate::Error> {
+        let frame = match message {
+            Message::Text(text) => Frame::text(text),
+            Message::Binary(binary) => Frame::binary(binary),
+            Message::Ping(data) => Frame::ping(data),
+            Message::Pong(data) => Frame::pong(data),
+            Message::Close => Frame::close(),
+        };
+        let buffer = frame.format();
+        self.stream.write(&buffer).await.unwrap();
+        self.stream.flush();
+        Ok(())
     }
 }
