@@ -68,6 +68,9 @@ impl MatchRouter {
             );
         }
 
+        self.handler.extend(router.handler.clone());
+        self.ws_handler.extend(router.ws_handler.clone());
+
         for router in router.router.iter() {
             MatchRouter::summary_router(self, router);
         }
@@ -108,6 +111,7 @@ impl MatchRouter {
                 for route in self.get.iter() {
                     if let Some(map) = route.match_params(request.path.clone()) {
                         request.params_map = map;
+                        println!("{} {}", request.path, route.path);
                         return match self.handler.get(&route.handler) {
                             Some(handler) => MatchRouteHandler::COMMON(handler.clone()),
                             None => match self.ws_handler.get(&route.handler) {
