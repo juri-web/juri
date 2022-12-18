@@ -1,5 +1,5 @@
 extern crate proc_macro;
-use generate::generate_struct;
+use generate::{generate_struct, generate_ws_struct};
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 use syn::{parse_macro_input, AttributeArgs, ItemFn, Meta, NestedMeta};
@@ -11,9 +11,12 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
     let args = parse_macro_input!(attr as AttributeArgs);
 
     let mut internal = false;
+    let mut ws = false;
     for arg in &args {
         if matches!(arg, NestedMeta::Meta(Meta::Path(p)) if p.is_ident("internal")) {
             internal = true;
+        } else if matches!(arg, NestedMeta::Meta(Meta::Path(p)) if p.is_ident("ws")) {
+            ws = true;
         }
     }
 
@@ -25,16 +28,33 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
         Ok(item_fn) => {
             let vis = item_fn.vis.clone();
             let ident = item_fn.sig.ident.clone();
-            let def_struct = generate_struct(internal, item_fn);
-            let expanded = quote! {
-                #vis fn #ident() -> juri::RouteOrWSRoute {
-                    #def_struct
+            let def_struct = if ws {
+                generate_ws_struct(internal, item_fn)
+            } else {
+                generate_struct(internal, item_fn)
+            };
+            let expanded = if ws {
+                quote! {
+                    #vis fn #ident() -> juri::RouteOrWSRoute {
+                        #def_struct
 
-                    juri::RouteOrWSRoute::COMMON(juri::Route {
-                        method: juri::HTTPMethod::GET,
-                        path: #string.to_string(),
-                        handler: std::sync::Arc::new(#ident)
-                    })
+                        juri::RouteOrWSRoute::WS(juri::WSRoute {
+                            path: #string.to_string(),
+                            handler: std::sync::Arc::new(#ident)
+                        })
+                    }
+                }
+            } else {
+                quote! {
+                    #vis fn #ident() -> juri::RouteOrWSRoute {
+                        #def_struct
+
+                        juri::RouteOrWSRoute::COMMON(juri::Route {
+                            method: juri::HTTPMethod::GET,
+                            path: #string.to_string(),
+                            handler: std::sync::Arc::new(#ident)
+                        })
+                    }
                 }
             };
             expanded.into()
