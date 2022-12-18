@@ -21,11 +21,11 @@ impl WSRequest for Request {
             })?;
         }
 
-        if let Some(connection) = self.header("Connection") {
-            if connection == "Upgrade" {
-                if let Some(upgrade) = self.header("Upgrade") {
-                    if upgrade == "websocket" {
-                        return Ok(WSResponse::success());
+        if self.header("Connection") == Some("Upgrade".to_string()) {
+            if self.header("Upgrade") == Some("websocket".to_string()) {
+                if self.header("Sec-WebSocket-Version") == Some("13".to_string()) {
+                    if self.header("Sec-WebSocket-Key") != None {
+                        return Ok(WSResponse::success(self.header_map.clone()));
                     }
                 }
             }

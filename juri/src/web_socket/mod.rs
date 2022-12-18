@@ -8,6 +8,8 @@ use crate::Request;
 use async_trait::async_trait;
 pub use request::WSRequest;
 pub use response::WSResponse;
+pub use stream::WSStream;
+pub use message::Message;
 
 #[async_trait]
 pub trait WSHandler {

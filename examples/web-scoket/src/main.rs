@@ -1,11 +1,26 @@
-
-use juri::{get, Router, StaticFilePlugin, Response, WSResponse, WSRequest};
+use juri::{get, Response, Router, StaticFilePlugin, WSRequest, WSResponse, WSMessage};
 use std::{env, fs, net::SocketAddr};
 pub static TEMPLATE_PATH: &str = "./web-scoket/template";
 
 #[get("/ws", ws)]
 pub fn handle_ws(request: &juri::Request) -> juri::Result<WSResponse> {
-    let ws = request.upgrader().unwrap();
+    println!("{:#?}", request.header_map);
+    let mut ws = request.upgrader().unwrap();
+
+    ws.on(|mut stream| async move {
+        loop {
+            let message = stream.read().await.unwrap();
+            match message {
+                WSMessage::Text(_) => todo!(),
+                WSMessage::Binary(_) => todo!(),
+                WSMessage::Ping(_) => todo!(),
+                WSMessage::Pong(_) => todo!(),
+                WSMessage::Close => {
+                    return;
+                }
+            }
+        }
+    });
     Ok(ws)
 }
 

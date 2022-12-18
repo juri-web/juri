@@ -24,4 +24,8 @@ futures-util = "0.3.25"
 async-trait = "0.1.58"
 byteorder = "1.4.3"
 
+# 加密 编码
+sha1 = "0.10.5"
+base64 = "0.20.0"
+
 [dev-dependencies]

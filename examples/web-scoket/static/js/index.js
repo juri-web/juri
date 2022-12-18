@@ -1,7 +1,7 @@
 // https://zh.javascript.info/websocket
 
 let socket = new WebSocket(
-    "ws://127.0.0.2:8080/ws"
+    "ws://127.0.0.1:7878/ws"
 );
 
 socket.onopen = function (e) {

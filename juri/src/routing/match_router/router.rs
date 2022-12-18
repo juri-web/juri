@@ -111,7 +111,6 @@ impl MatchRouter {
                 for route in self.get.iter() {
                     if let Some(map) = route.match_params(request.path.clone()) {
                         request.params_map = map;
-                        println!("{} {}", request.path, route.path);
                         return match self.handler.get(&route.handler) {
                             Some(handler) => MatchRouteHandler::COMMON(handler.clone()),
                             None => match self.ws_handler.get(&route.handler) {

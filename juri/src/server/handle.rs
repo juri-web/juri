@@ -3,7 +3,7 @@ use crate::{
     error::ResponseAndError,
     plugin::JuriPlugin,
     routing::{MatchRouteHandler, MatchRouter},
-    Config, Response, ResponseBody,
+    Config, Response, ResponseBody, web_socket::WSStream,
 };
 use async_std::{net::TcpStream, sync::Arc};
 use colored::*;
@@ -66,7 +66,20 @@ pub async fn handle_request(
                         MatchRouteHandler::WS(handler) => {
                             let ws_response = handler.call(&request).await;
                             match ws_response {
-                                Ok(ws_response) => ws_response.response,
+                                Ok(ws_response) => { 
+                                    println!(
+                                        "{}: WebSocket Response {} {} {}",
+                                        "INFO".green(),
+                                        request.method,
+                                        request.path,
+                                        ws_response.response.status_code
+                                    );
+                                    send_stream(&mut stream, &config, Some(&request), &ws_response.response).await;
+                                    if let Some(callback) = ws_response.callback {
+                                        callback(WSStream::new(stream)).await;
+                                    } 
+                                    break;
+                                },
                                 Err(err) => match err {
                                     ResponseAndError::Error(e) => Response {
                                         status_code: e.code,
