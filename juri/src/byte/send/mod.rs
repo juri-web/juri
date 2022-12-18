@@ -15,7 +15,11 @@ fn generate_response_header_bytes(
     response: &Response,
     config: &Arc<Config>,
 ) -> Vec<u8> {
-    let status = format!("HTTP/1.1 {} {}\r\n", response.status_code, status_code_to_text(response.status_code));
+    let status = format!(
+        "HTTP/1.1 {} {}\r\n",
+        response.status_code,
+        status_code_to_text(response.status_code)
+    );
     let server = "Server: Rust\r\n";
     let mut headers_str = format!("{}{}", status, server);
 
@@ -29,7 +33,7 @@ fn generate_response_header_bytes(
             headers_str.push_str(
                 format!("Keep-Alive: timeout={}\r\n", config.keep_alive_timeout).as_str(),
             );
-        } else {
+        } else if response.headers.get("Connection").is_none() {
             headers_str.push_str("Connection: close\r\n");
         }
     }
@@ -50,7 +54,6 @@ pub async fn send_stream(
     response: &Response,
 ) {
     let mut bytes = generate_response_header_bytes(request, response, config);
-
     match response.get_body_bytes() {
         ResponseBodyByte::All(mut body_bytes) => {
             bytes.append(&mut body_bytes);
@@ -66,7 +69,7 @@ pub async fn send_stream(
                 if bytes_count == 0 {
                     break;
                 }
-                
+
                 stream.write(&buffer).await.unwrap();
 
                 if bytes_count < BUFFER_SIZE {
@@ -74,7 +77,9 @@ pub async fn send_stream(
                 }
             }
         }
-        ResponseBodyByte::None => {}
+        ResponseBodyByte::None => {
+            stream.write(&bytes).await.unwrap();
+        }
     }
     stream.flush().await.unwrap();
 }

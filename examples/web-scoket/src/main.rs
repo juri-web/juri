@@ -11,7 +11,9 @@ pub fn handle_ws(request: &juri::Request) -> juri::Result<WSResponse> {
         loop {
             let message = stream.read().await.unwrap();
             match message {
-                WSMessage::Text(_) => todo!(),
+                WSMessage::Text(text) => {
+                    println!("ws test: {}", text);
+                },
                 WSMessage::Binary(_) => todo!(),
                 WSMessage::Ping(_) => todo!(),
                 WSMessage::Pong(_) => todo!(),

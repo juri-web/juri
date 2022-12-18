@@ -22,7 +22,8 @@ impl WSStream {
 impl WSStream {
     pub async fn read(&mut self) -> Result<Message, crate::Error> {
         loop {
-            let frame = Frame::read_frame(&mut self.stream).await?;
+            let mut frame = Frame::read_frame(&mut self.stream).await?;
+            frame.apply_mask();
             match frame.header.opcode {
                 OpCode::Continue => {
                     if frame.header.fin {

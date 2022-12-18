@@ -40,7 +40,7 @@ pub struct FrameHeader {
     pub opcode: OpCode,
 
     payload_length: u64,
-    masking_key: Option<u32>,
+    pub masking_key: Option<[u8; 4]>,
 }
 
 impl Default for FrameHeader {
@@ -104,16 +104,19 @@ impl FrameHeader {
                 length => length.into(),
             }
         };
-
         let masking_key = if mask {
-            Some(
-                cursor
-                    .read_u32::<NetworkEndian>()
-                    .map_err(|e| crate::Error {
-                        code: 400,
-                        reason: e.to_string(),
-                    })?,
-            )
+            let mut masking_key = [0u8; 4];
+            let count = cursor.read(&mut masking_key).map_err(|e| crate::Error {
+                code: 400,
+                reason: e.to_string(),
+            })?;
+            if count != 4 {
+                return Err(crate::Error {
+                    code: 400,
+                    reason: "Web Sccoket parse masking key failed".to_string(),
+                });
+            }
+            Some(masking_key)
         } else {
             None
         };
@@ -205,5 +208,15 @@ impl Frame {
         let mut payload = vec![];
         cursor.read_to_end(&mut payload).unwrap();
         Ok(Frame { header, payload })
+    }
+
+    /// https://www.rfc-editor.org/rfc/rfc6455#section-5.3
+    pub fn apply_mask(&mut self) {
+        if let Some(masking_key) = self.header.masking_key {
+            for (i, original_octet_i) in self.payload.iter_mut().enumerate() {
+                let j = i % 4;
+                *original_octet_i ^= masking_key[j];
+            }
+        }
     }
 }
