@@ -203,7 +203,7 @@ impl Frame {
         let mut cursor = Cursor::new(bytes);
         let header = FrameHeader::parse(&mut cursor)?;
         let mut payload = vec![];
-        cursor.read_to_end(&mut payload);
+        cursor.read_to_end(&mut payload).unwrap();
         Ok(Frame { header, payload })
     }
 }
