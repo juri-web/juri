@@ -1,4 +1,4 @@
-use crate::{request::HTTPMethod, routing::match_route_path, JuriPlugin, Request, Response};
+use crate::{request::HTTPMethod, routing::match_route_params, JuriPlugin, Request, Response};
 use regex::Regex;
 use std::{collections::HashMap, path::PathBuf};
 
@@ -33,7 +33,7 @@ impl JuriPlugin for StaticFilePlugin {
     fn request(&self, request: &mut Request) -> Option<Response> {
         if request.method == HTTPMethod::GET {
             for re in self.re_urls.iter() {
-                if let Some(params_map) = match_route_path(
+                if let Some(params_map) = match_route_params(
                     re.to_string(),
                     vec!["url_path".to_string()],
                     request.path.clone(),

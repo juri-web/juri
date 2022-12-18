@@ -1,7 +1,7 @@
 use crate::{
     cache::main::init_cache,
     plugin::JuriPlugin,
-    routing::{conversion_router, Router},
+    routing::{MatchRouter, Router},
     server::handle::handle_request,
     Config,
 };
@@ -47,7 +47,7 @@ impl Server {
             self.addr
         );
         let mut incoming = listener.incoming();
-        let router = Arc::new(conversion_router(router));
+        let router = Arc::new(MatchRouter::new(router));
         let plugins = Arc::new(self.plugins);
         let config = Arc::new(self.config);
 

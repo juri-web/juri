@@ -8,7 +8,7 @@ type BoxWebSocketHandler =
     Box<dyn FnOnce(WSStream) -> BoxFuture<'static, ()> + Send + Sync + 'static>;
 
 pub struct WSResponse {
-    response: Response,
+    pub response: Response,
     callback: Option<BoxWebSocketHandler>,
 }
 

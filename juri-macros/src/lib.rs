@@ -27,14 +27,14 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
             let ident = item_fn.sig.ident.clone();
             let def_struct = generate_struct(internal, item_fn);
             let expanded = quote! {
-                #vis fn #ident() -> juri::Route {
+                #vis fn #ident() -> juri::RouteOrWSRoute {
                     #def_struct
 
-                    juri::Route {
+                    juri::RouteOrWSRoute::COMMON(juri::Route {
                         method: juri::HTTPMethod::GET,
                         path: #string.to_string(),
                         handler: std::sync::Arc::new(#ident)
-                    }
+                    })
                 }
             };
             expanded.into()
@@ -64,14 +64,14 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
             let ident = item_fn.sig.ident.clone();
             let def_struct = generate_struct(internal, item_fn);
             let expanded = quote! {
-                #vis fn #ident() -> juri::Route {
+                #vis fn #ident() -> juri::RouteOrWSRoute {
                     #def_struct
 
-                    juri::Route {
+                    juri::RouteOrWSRoute::COMMON(juri::Route {
                         method: juri::HTTPMethod::POST,
                         path: #string.to_string(),
                         handler: std::sync::Arc::new(#ident)
-                    }
+                    })
                 }
             };
             expanded.into()

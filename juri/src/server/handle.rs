@@ -2,7 +2,7 @@ use crate::{
     byte::{handle_bytes, send_stream},
     error::ResponseAndError,
     plugin::JuriPlugin,
-    routing::{match_route, MatchRouter},
+    routing::{MatchRouteHandler, MatchRouter},
     Config, Response, ResponseBody,
 };
 use async_std::{net::TcpStream, sync::Arc};
@@ -48,8 +48,8 @@ pub async fn handle_request(
 
                 let mut response = match plugin_response {
                     Some(response) => response,
-                    None => match match_route(&mut request, router) {
-                        Some(handler) => {
+                    None => match router.match_handler(&mut request) {
+                        MatchRouteHandler::COMMON(handler) => {
                             let response = handler.call(&request).await;
                             match response {
                                 Ok(response) => response,
@@ -62,8 +62,22 @@ pub async fn handle_request(
                                     ResponseAndError::Response(response) => response,
                                 },
                             }
-                        }
-                        None => Response {
+                        },
+                        MatchRouteHandler::WS(handler) => {
+                            let ws_response = handler.call(&request).await;
+                            match ws_response {
+                                Ok(ws_response) => ws_response.response,
+                                Err(err) => match err {
+                                    ResponseAndError::Error(e) => Response {
+                                        status_code: e.code,
+                                        headers: HashMap::new(),
+                                        body: ResponseBody::None,
+                                    },
+                                    ResponseAndError::Response(response) => response,
+                                },
+                            }
+                        },
+                        MatchRouteHandler::None => Response {
                             status_code: 404,
                             headers: HashMap::new(),
                             body: ResponseBody::Text("".to_string()),

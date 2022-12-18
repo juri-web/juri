@@ -15,11 +15,12 @@ pub use error::{Error, ResponseAndError, Result};
 pub use plugin::{JuriPlugin, StaticFilePlugin};
 pub use request::{HTTPMethod, Request};
 pub use response::{HTTPHandler, Response, ResponseBody};
-pub use routing::{Route, Router};
+pub use routing::{Route, RouteOrWSRoute, Router, WSRoute};
 pub use server::Server;
+pub use web_socket::{WSHandler, WSRequest, WSResponse};
 
 pub use async_std::main;
 pub use async_trait::async_trait;
 pub use juri_macros::get;
-pub use juri_macros::post;
 pub use juri_macros::handler;
+pub use juri_macros::post;

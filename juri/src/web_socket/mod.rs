@@ -11,9 +11,7 @@ pub use response::WSResponse;
 
 #[async_trait]
 pub trait WSHandler {
-    async fn call<WS>(&self, request: &Request) -> crate::Result<WSResponse>
-    where
-        WS: WSRequest;
+    async fn call(&self, request: &Request) -> crate::Result<WSResponse>;
 }
 
 #[cfg(test)]
