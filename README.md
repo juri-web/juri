@@ -1,8 +1,44 @@
-# HTTP Framework
+<p align="center">
+    <a href="https://github.com/luoxiaozero/juri" target="_blank">
+        <span
+            style="
+                position: relative;
+                width: 110px;
+                height: 110px;
+                border-radius: 38px;
+                border: 9px solid #333;
+                display: inline-flex;
+                justify-content: center;
+                align-items: center;
+            "
+        >
+            <span
+                style="
+                    position: absolute;
+                    top: -16px;
+                    right: -16px;
+                    width: 55px;
+                    height: 55px;
+                    background-color: #ec2b24;
+                    border-radius: 50%;
+                "
+            ></span>
+        </span>
+    </a>
+</p>
+<br/>
+<p align="center">
+  <a href="https://crates.io/crates/juri"><img src="https://img.shields.io/crates/v/juri" alt="crates package"></a>
+</p>
+<br/>
+
+# Juri
+
+HTTP Framework
 
 ## Getting Started
 
-Please refer to [juri document](https://luoxiaozero.github.io/juri)
+Please refer to [Juri Document](https://luoxiaozero.github.io/juri)
 
 ## Example
 
