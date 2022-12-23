@@ -1,11 +1,16 @@
-## http service
+# HTTP Framework
 
-# example
+## Getting Started
+
+Please refer to [juri document](https://luoxiaozero.github.io/juri)
+
+## Example
 
 ```rust
-use juri::{Request, Response, Router};
+use juri::{Request, Response, Router, handler};
 use std::net::SocketAddr;
 
+#[handler]
 fn handle_index(_request: &Request) -> juri::Result<Response> {
     Ok(Response::html_str("Hello Juri"))
 }
@@ -13,28 +18,13 @@ fn handle_index(_request: &Request) -> juri::Result<Response> {
 #[juri::main]
 async fn main() {
     let mut router = Router::new();
-    router.get("/", handle_index);
-    router.post("/", handle_index);
+    router.at("/").get(handle_index);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 7878));
     juri::Server::bind(addr).server(router).await.unwrap();
 }
 ```
 
-## 路由匹配
+## License
 
-```rust
-// 匹配 /one
-router.get("/one", handle_index);
-
-// 匹配 /one/two
-// 通过 `request.param("chapters")` 来获取 two
-router.get("/one/:chapters", handle_index);
-
-// 匹配 /one/two/three
-router.get("/one/:chapters/three", handle_index);
-
-// 匹配 /one/two，/one/two/three
-// 通过 `request.param("chapters")` 来获取 /one/two -> two，/one/two/three -> two/three
-router.get("/one/:chapters+", handle_index);
-```
+[MIT](./LICENSE) License
