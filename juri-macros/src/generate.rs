@@ -51,8 +51,8 @@ pub fn generate_ws_struct(internal: bool, item_fn: ItemFn) -> TokenStream {
         #vis #def_struct
 
         #[#crate_name::async_trait]
-        impl #crate_name::WSHandler for #ident {
-            async fn call(&self, request: &#crate_name::Request) -> #crate_name::Result<#crate_name::WSResponse> {
+        impl #crate_name::web_socket::WSHandler for #ident {
+            async fn call(&self, request: &#crate_name::Request) -> #crate_name::Result<#crate_name::web_socket::WSResponse> {
                 #item_fn
                 let res = #ident(&request)#call_await;
                 res

@@ -2,7 +2,7 @@ use super::{
     super::{RouteHandlerMap, WSRouterHandlerMap},
     route::MatchRoute,
 };
-use crate::{request::HTTPMethod, response::HTTPHandler, Request, Router, WSHandler};
+use crate::{request::HTTPMethod, response::HTTPHandler, Request, Router, web_socket::WSHandler};
 use std::{cmp::Ordering, collections::HashMap, sync::Arc};
 
 pub struct MatchRouter {

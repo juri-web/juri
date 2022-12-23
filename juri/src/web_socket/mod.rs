@@ -7,7 +7,7 @@ mod stream;
 use crate::Request;
 use async_trait::async_trait;
 pub use message::Message;
-pub use request::WSRequest;
+pub use request::RequestExt;
 pub use response::WSResponse;
 pub use stream::WSStream;
 
@@ -18,7 +18,7 @@ pub trait WSHandler: Send + Sync {
 
 #[cfg(test)]
 mod test {
-    use super::{message::Message, WSRequest, WSResponse};
+    use super::{message::Message, RequestExt, WSResponse};
     use crate::Request;
 
     fn test_handle_success(request: &Request) -> crate::Result<WSResponse> {

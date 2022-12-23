@@ -1,4 +1,4 @@
-use crate::WSHandler;
+use crate::web_socket::WSHandler;
 use std::{sync::Arc, collections::HashMap};
 
 
