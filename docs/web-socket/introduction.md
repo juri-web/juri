@@ -1,6 +1,4 @@
-# 入门
-
-## 是啥
+## WebSocket 是啥
 
 WebSocket 是一种网络传输协议，可在单个 TCP 连接上进行全双工通信，位于 OSI 模型的应用层。具体可以参考 [维基百科](https://zh.m.wikipedia.org/zh-hans/WebSocket)
 

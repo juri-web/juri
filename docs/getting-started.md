@@ -1,8 +1,19 @@
-# 开始
+<p align="center">
+    <a href="https://github.com/luoxiaozero/juri" target="_blank">
+        <img src="https://repository-images.githubusercontent.com/515388328/57b059d4-f581-471d-bb00-8bdd129912d2" alt="juri logo" width="180"/>
+    </a>
+</p>
+<br/>
+<p align="center">
+  <a href="https://crates.io/crates/juri"><img src="https://img.shields.io/crates/v/juri" alt="crates package"></a>
+</p>
+<br/>
 
 ## 总览
 
 Juri 是一个 Web 服务器框架。
+
+[Github](https://github.com/luoxiaozero/juri)
 
 ## 安装
 
