@@ -1,29 +1,6 @@
 <p align="center">
     <a href="https://github.com/luoxiaozero/juri" target="_blank">
-        <span
-            style="
-                position: relative;
-                width: 110px;
-                height: 110px;
-                border-radius: 38px;
-                border: 9px solid #333;
-                display: inline-flex;
-                justify-content: center;
-                align-items: center;
-            "
-        >
-            <span
-                style="
-                    position: absolute;
-                    top: -16px;
-                    right: -16px;
-                    width: 55px;
-                    height: 55px;
-                    background-color: #ec2b24;
-                    border-radius: 50%;
-                "
-            ></span>
-        </span>
+        <img src="https://repository-images.githubusercontent.com/515388328/57b059d4-f581-471d-bb00-8bdd129912d2" alt="juri logo" width="180"/>
     </a>
 </p>
 <br/>
