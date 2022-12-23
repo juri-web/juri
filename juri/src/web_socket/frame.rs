@@ -54,7 +54,7 @@ pub struct FrameHeader {
     rsv3: bool,
     pub opcode: OpCode,
 
-    #[warn(dead_code)]
+    #[allow(dead_code)]
     payload_length: u64,
     pub masking_key: Option<[u8; 4]>,
 }
@@ -224,8 +224,6 @@ impl Frame {
         }
     }
 
-    /// Create a new Close control frame.
-    #[inline]
     pub fn close() -> Frame {
         Frame {
             header: FrameHeader::default(),
