@@ -5,7 +5,7 @@ use crate::{
     server::handle::handle_request,
     Config,
 };
-use async_std::{net::TcpListener, prelude::*, sync::Arc};
+use async_std::{net::TcpListener, prelude::*, sync::Arc, task::spawn};
 use colored::*;
 use std::net::SocketAddr;
 mod handle;
@@ -57,7 +57,7 @@ impl Server {
             let plugins = Arc::clone(&plugins);
             let config = Arc::clone(&config);
 
-            handle_request(stream, router, plugins, config).await;
+            spawn(handle_request(stream, router, plugins, config));
         }
         Ok(())
     }
