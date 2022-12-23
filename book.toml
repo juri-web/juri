@@ -1,0 +1,6 @@
+[book]
+title = "Juri Docs"
+authors = ["luoxiaozero"]
+language = "zh-CN"
+multilingual = false
+src = "docs"
