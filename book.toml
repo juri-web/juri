@@ -1,6 +1,10 @@
 [book]
-title = "Juri Docs"
+title = "Juri 文档"
 authors = ["luoxiaozero"]
 language = "zh-CN"
 multilingual = false
 src = "docs"
+
+[output.html]
+site-url = "/juri/"
+git-repository-url = "https://github.com/luoxiaozero/juri/tree/master/docs"
