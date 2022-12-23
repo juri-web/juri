@@ -10,9 +10,9 @@ let router = Router::new();
 
 ## 添加处理函数
 
-目前只支持 `get` 和 `post` 两种请求方式
-
 ### At 方式
+
+只支持 `get` 和 `post` 两种请求方式
 
 ```rust,noplayground
 use juri::Router;
@@ -39,6 +39,8 @@ fn handle_fn(request: &Request) -> juri::Result<Response> {
 
 ### Route 方式
 
+只支持 `get` 和 `post` 两种请求方式，另外支持 ws
+
 ```rust,noplayground
 use juri::Router;
 
@@ -51,11 +53,17 @@ router.route(handle_fn);
 函数定义 
 
 ```rust,noplayground
-use juri::{get, post, Request, Response};
+use juri::{get, post, Request, Response, WSRequest, WSResponse};
 
 /// 支持同步和异步。异步时在 `fn` 前添加 `async`
 #[get("/")]
 fn handle_fn(request: &Request) -> juri::Result<Response> {
+    /// body
+}
+
+/// 使用 ws 时，只需在 `get` 宏中加 ws 参数即可，其他同 get 请求格式
+#[get("/", ws)]
+fn handle_fn_ws(request: &juri::Request) -> juri::Result<WSResponse> {
     /// body
 }
 
