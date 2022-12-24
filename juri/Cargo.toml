@@ -1,6 +1,6 @@
 [package]
 name = "juri"
-version = "0.3.5"
+version = "0.4.0-alpha.1"
 edition = "2021"
 
 authors = ["luoxiaozero <luoxiaozero@163.com>"]
@@ -19,7 +19,7 @@ serde_derive = "1.0.144"
 serde_json = "1.0.83"
 colored = "2.0.0"
 async-std = { version = "1.12.0", features = ["attributes"] }
-juri-macros = { path = "../juri-macros", version = "0.1.0" }
+juri-macros = { path = "../juri-macros", version = "0.2.0-alpha.1" }
 futures-util = "0.3.25"
 async-trait = "0.1.58"
 byteorder = "1.4.3"

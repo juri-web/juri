@@ -13,11 +13,11 @@
 
 Juri 是一个 Web 服务器框架。
 
-[Github](https://github.com/luoxiaozero/juri)
+[Github 地址](https://github.com/luoxiaozero/juri)
 
 ## 安装
 
-[Juri 项目 Crates 地址](https://crates.io/crates/juri)
+[Crates 地址](https://crates.io/crates/juri)
 
 cargo:
 
@@ -28,7 +28,7 @@ cargo add juri
 
 或者
 
-在 Cargo.toml 文件里添加 `juri = "0.4.0"`
+在 Cargo.toml 文件里添加 `juri = "0.4.0-alpha.1"`
 
 ## 使用
 
