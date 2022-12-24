@@ -3,7 +3,7 @@ mod cache;
 mod config;
 mod error;
 pub mod json;
-mod plugin;
+pub mod plugin;
 mod request;
 mod response;
 mod routing;
@@ -12,7 +12,6 @@ pub mod web_socket;
 
 pub use config::Config;
 pub use error::{Error, ResponseAndError, Result};
-pub use plugin::{JuriPlugin, StaticFilePlugin};
 pub use request::{HTTPMethod, Request};
 pub use response::{HTTPHandler, Response, ResponseBody};
 pub use routing::{Route, RouteOrWSRoute, Router, WSRoute};

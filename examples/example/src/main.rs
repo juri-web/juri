@@ -1,7 +1,7 @@
 mod api;
 mod user;
-use juri::{Router, StaticFilePlugin};
-use std::{env, net::SocketAddr};
+use juri::{Router, plugin::StaticFilePlugin};
+use std::{env, net::SocketAddr, collections::HashMap};
 
 fn init_router() -> Router {
     let mut router = Router::new();
@@ -42,10 +42,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let router = init_router();
 
     let current_dir = env::current_dir().unwrap();
-    let static_file_plugin = StaticFilePlugin::new(
-        vec!["/static".to_string()],
+    let static_file_plugin = StaticFilePlugin::new(HashMap::from([(
+        "/static",
         vec![current_dir.join("example").join("static")],
-    );
+    )]));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 7878));
     juri::Server::bind(addr)

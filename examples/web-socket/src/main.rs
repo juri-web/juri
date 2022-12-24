@@ -1,5 +1,5 @@
-use juri::{Router, StaticFilePlugin};
-use std::{env, net::SocketAddr};
+use juri::{Router, plugin::StaticFilePlugin};
+use std::{collections::HashMap, env, net::SocketAddr};
 mod views;
 
 #[juri::main]
@@ -9,10 +9,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     router.route(views::handle_ws());
 
     let current_dir = env::current_dir().unwrap();
-    let static_file_plugin = StaticFilePlugin::new(
-        vec!["/static".to_string()],
+    let static_file_plugin = StaticFilePlugin::new(HashMap::from([(
+        "/static",
         vec![current_dir.join("web-socket").join("static")],
-    );
+    )]));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 7878));
     juri::Server::bind(addr)
