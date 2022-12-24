@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>介绍 - Juri 文档</title>
+        <title>静态文件插件 - Juri 文档</title>
                 
 
         <!-- Custom HTML head -->
@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="../router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="../web-socket/introduction.html" class="active"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">Plugin</li><li class="chapter-item expanded "><a href="../plugin/introduction.html"><strong aria-hidden="true">4.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../plugin/plugin-static-file.html"><strong aria-hidden="true">5.</strong> 静态文件插件</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="../router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="../web-socket/introduction.html"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">Plugin</li><li class="chapter-item expanded "><a href="../plugin/introduction.html"><strong aria-hidden="true">4.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../plugin/plugin-static-file.html" class="active"><strong aria-hidden="true">5.</strong> 静态文件插件</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -146,44 +146,36 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="websocket-是啥"><a class="header" href="#websocket-是啥">WebSocket 是啥</a></h2>
-<p>WebSocket 是一种网络传输协议，可在单个 TCP 连接上进行全双工通信，位于 OSI 模型的应用层。具体可以参考 <a href="https://zh.m.wikipedia.org/zh-hans/WebSocket">维基百科</a></p>
-<p>JavaScript 的 WebSocket 使用可以参考 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/WebSocket">MDN 文档</a></p>
+                        <h2 id="静态文件插件"><a class="header" href="#静态文件插件">静态文件插件</a></h2>
+<p>加载静态文件插件</p>
+<p>使用签名如下</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl StaticFilePlugin {
+    /// HashMap 的 key 代表匹配 URL 的前缀，value 代表匹配 的文件路径(为多个文件路径)
+    pub fn new(config: HashMap&lt;&amp;str, Vec&lt;PathBuf&gt;&gt;&gt;) -&gt; Self;
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>例：</p>
+<p>key 为 <code>/static</code>， value 为伪代码 <code>[&quot;/home&quot;, &quot;/www/site&quot;]</code>，URL 为 <code>/static/js/index.js</code> 时</p>
+<p>会先查找 <code>/home/js/index.js</code>，然后在查找 <code>/www/site/js/index.js</code>，最后匹配失败</p>
 <h2 id="使用"><a class="header" href="#使用">使用</a></h2>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use juri::{get, Request, Response, web_socket::{Message, RequestExt, WSResponse}};
+</span>use juri::plugin::StaticFilePlugin;
+use std::{env, collections::HashMap};
 
-#[get(&quot;/ws&quot;, ws)]
-pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
-    /// 升级为 ws, 成功时返回 WSResponse
-    let mut ws = request.upgrader().unwrap();
+let current_dir = env::current_dir().unwrap();
 
-    // 传入 ws 处理逻辑
-    ws.on(|mut stream| async move {
-        loop {
-            let message = stream.read().await.unwrap();
-            match message {
-                Message::Text(text) =&gt; {
-                    stream.send(WSMessage::Text(&quot;hi&quot;.to_string())).await.unwrap();
-                },
-                Message::Binary(_) =&gt; todo!(),
-                Message::Ping(_) =&gt; todo!(),
-                Message::Pong(_) =&gt; todo!(),
-                Message::Close =&gt; {
-                    return;
-                }
-            }
-        }
-    });
+let static_file_plugin = StaticFilePlugin::new(HashMap::from([(
+        &quot;/static&quot;,
+        vec![current_dir.join(&quot;web-socket&quot;).join(&quot;static&quot;)],
+    )]));
 
-    /// 返回 WSResponse
-    Ok(ws)
-
-    /// 也可以自定义返回
-    // Ok(WSResponse::new(Response::html_str(&quot;&quot;)))
-}
+juri::Server::bind(addr).plugin(static_file_plugin);
 <span class="boring">}
 </span></code></pre></pre>
 
@@ -191,13 +183,10 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                                                    <a rel="prev" href="../router/route-matching-syntax.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                                    <a rel="prev" href="../plugin/introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
-                                                    <a rel="next" href="../plugin/introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
                         
                         <div style="clear: both"></div>
                     </nav>
@@ -205,13 +194,10 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                                    <a rel="prev" href="../router/route-matching-syntax.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                    <a rel="prev" href="../plugin/introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
-                                    <a rel="next" href="../plugin/introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
                             </nav>
 
         </div>

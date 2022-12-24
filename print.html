@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="router/introduction.html"><strong aria-hidden="true">1.</strong> 入门</a></li><li class="chapter-item expanded "><a href="router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="web-socket/introduction.html"><strong aria-hidden="true">3.</strong> 入门</a></li><li class="chapter-item expanded affix "><li class="part-title">Plugin</li><li class="chapter-item expanded "><a href="plugin/introduction.html"><strong aria-hidden="true">4.</strong> 入门</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="web-socket/introduction.html"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">Plugin</li><li class="chapter-item expanded "><a href="plugin/introduction.html"><strong aria-hidden="true">4.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="plugin/plugin-static-file.html"><strong aria-hidden="true">5.</strong> 静态文件插件</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -308,7 +308,7 @@ router.get(&quot;/one/:chapters+&quot;, handle_index);
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use juri::{get, Request, Response, WSRequest, WSResponse, WSMessage};
+</span>use juri::{get, Request, Response, web_socket::{Message, RequestExt, WSResponse}};
 
 #[get(&quot;/ws&quot;, ws)]
 pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
@@ -320,13 +320,13 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
         loop {
             let message = stream.read().await.unwrap();
             match message {
-                WSMessage::Text(text) =&gt; {
+                Message::Text(text) =&gt; {
                     stream.send(WSMessage::Text(&quot;hi&quot;.to_string())).await.unwrap();
                 },
-                WSMessage::Binary(_) =&gt; todo!(),
-                WSMessage::Ping(_) =&gt; todo!(),
-                WSMessage::Pong(_) =&gt; todo!(),
-                WSMessage::Close =&gt; {
+                Message::Binary(_) =&gt; todo!(),
+                Message::Ping(_) =&gt; todo!(),
+                Message::Pong(_) =&gt; todo!(),
+                Message::Close =&gt; {
                     return;
                 }
             }
@@ -341,7 +341,93 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
 }
 <span class="boring">}
 </span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><p>TODO</p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="插件"><a class="header" href="#插件">插件</a></h2>
+<p>创建插件需要实现以下 JuriPlugin trait</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub trait JuriPlugin: Send + Sync + 'static {
+    /// 请求拦截器
+    fn request(&amp;self, request: &amp;mut Request) -&gt; Option&lt;Response&gt;;
+    /// 响应拦截器
+    fn response(&amp;self, request: &amp;Request, response: &amp;mut Response);
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>例：</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use juri::plugin::JuriPlugin;
+
+struct MyPlugin {
+
+}
+
+impl JuriPlugin for MyPlugin {
+    fn request(&amp;self, request: &amp;mut Request) -&gt; Option&lt;Response&gt; {
+        /// 可修改请求内容
+
+        /// 返回是 `None` 时，继续执行
+        /// or
+        /// 返回是 `Response` 时，拦截接下来的操作
+
+
+        /// 例：插件有 `[1, 2, 3]`
+        /// 插件 2 返回 `Response` 时，执行顺序为 request：1 - 2，response： 2 - 1
+        /// 都为 `None` 时，执行顺序为 request：1 - 2 - 3，匹配路由，response： 3 - 2 - 1
+    }
+
+    fn response(&amp;self, request: &amp;Request, response: &amp;mut Response) {
+        /// 可修改请求内容和响应内容
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="使用-2"><a class="header" href="#使用-2">使用</a></h2>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let my_plugin = MyPlugin {};
+
+/// 生成 `MyPlugin` 实例传入 `plugin` 函数
+juri::Server::bind(addr).plugin(my_plugin);
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="内置插件"><a class="header" href="#内置插件">内置插件</a></h2>
+<p><a href="plugin/./plugin-static-file.html">静态文件插件</a></p>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="静态文件插件"><a class="header" href="#静态文件插件">静态文件插件</a></h2>
+<p>加载静态文件插件</p>
+<p>使用签名如下</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl StaticFilePlugin {
+    /// HashMap 的 key 代表匹配 URL 的前缀，value 代表匹配 的文件路径(为多个文件路径)
+    pub fn new(config: HashMap&lt;&amp;str, Vec&lt;PathBuf&gt;&gt;&gt;) -&gt; Self;
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>例：</p>
+<p>key 为 <code>/static</code>， value 为伪代码 <code>[&quot;/home&quot;, &quot;/www/site&quot;]</code>，URL 为 <code>/static/js/index.js</code> 时</p>
+<p>会先查找 <code>/home/js/index.js</code>，然后在查找 <code>/www/site/js/index.js</code>，最后匹配失败</p>
+<h2 id="使用-3"><a class="header" href="#使用-3">使用</a></h2>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use juri::plugin::StaticFilePlugin;
+use std::{env, collections::HashMap};
+
+let current_dir = env::current_dir().unwrap();
+
+let static_file_plugin = StaticFilePlugin::new(HashMap::from([(
+        &quot;/static&quot;,
+        vec![current_dir.join(&quot;web-socket&quot;).join(&quot;static&quot;)],
+    )]));
+
+juri::Server::bind(addr).plugin(static_file_plugin);
+<span class="boring">}
+</span></code></pre></pre>
 
                     </main>
 
