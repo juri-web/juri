@@ -1,4 +1,4 @@
-use crate::{request::HTTPMethod, routing::match_route_params, JuriPlugin, Request, Response};
+use crate::{request::HTTPMethod, routing::match_route_params, plugin::JuriPlugin, Request, Response};
 use regex::Regex;
 use std::{collections::HashMap, path::PathBuf};
 

@@ -1,6 +1,6 @@
 mod api;
 mod user;
-use juri::{Router, StaticFilePlugin};
+use juri::{Router, plugin::StaticFilePlugin};
 use std::{env, net::SocketAddr, collections::HashMap};
 
 fn init_router() -> Router {
