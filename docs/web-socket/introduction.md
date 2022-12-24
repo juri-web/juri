@@ -7,7 +7,7 @@ JavaScript 的 WebSocket 使用可以参考 [MDN 文档](https://developer.mozil
 ## 使用
 
 ```rust
-use juri::{get, Request, Response, WSRequest, WSResponse, WSMessage};
+use juri::{get, Request, Response, web_socket::{Message, RequestExt, WSResponse}};
 
 #[get("/ws", ws)]
 pub fn handle_ws(&request: Request) -> juri::Result<WSResponse> {
@@ -19,13 +19,13 @@ pub fn handle_ws(&request: Request) -> juri::Result<WSResponse> {
         loop {
             let message = stream.read().await.unwrap();
             match message {
-                WSMessage::Text(text) => {
+                Message::Text(text) => {
                     stream.send(WSMessage::Text("hi".to_string())).await.unwrap();
                 },
-                WSMessage::Binary(_) => todo!(),
-                WSMessage::Ping(_) => todo!(),
-                WSMessage::Pong(_) => todo!(),
-                WSMessage::Close => {
+                Message::Binary(_) => todo!(),
+                Message::Ping(_) => todo!(),
+                Message::Pong(_) => todo!(),
+                Message::Close => {
                     return;
                 }
             }
