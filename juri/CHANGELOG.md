@@ -1,3 +1,9 @@
+## 0.4.0-alpha.1 (2022-12-24)
+
+### Features
+
+support WebSocket
+
 ## 0.3.5 (2022-11-25)
 
 ### Bug Fixes
