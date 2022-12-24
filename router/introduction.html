@@ -1,0 +1,289 @@
+<!DOCTYPE HTML>
+<html lang="zh-CN" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>入门 - Juri 文档</title>
+                
+
+        <!-- Custom HTML head -->
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+                <link rel="icon" href="../favicon.svg">
+                        <link rel="shortcut icon" href="../favicon.png">
+                <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+                <link rel="stylesheet" href="../css/print.css" media="print">
+        
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+                <link rel="stylesheet" href="../fonts/fonts.css">
+        
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+            </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="../router/introduction.html" class="active"><strong aria-hidden="true">1.</strong> 入门</a></li><li class="chapter-item expanded "><a href="../router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="../web-socket/introduction.html"><strong aria-hidden="true">3.</strong> 入门</a></li><li class="chapter-item expanded affix "><li class="part-title">Plugin</li><li class="chapter-item expanded "><a href="../plugin/introduction.html"><strong aria-hidden="true">4.</strong> 入门</a></li></ol>            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                                                <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                                            </div>
+
+                    <h1 class="menu-title">Juri 文档</h1>
+
+                    <div class="right-buttons">
+                                                <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                                                                        <a href="https://github.com/luoxiaozero/juri/tree/master/docs" title="Git repository" aria-label="Git repository">
+                            <i id="git-repository-button" class="fa fa-github"></i>
+                        </a>
+                                                
+                    </div>
+                </div>
+
+                                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h2 id="新建路由器"><a class="header" href="#新建路由器">新建路由器</a></h2>
+<pre><code class="language-rust noplayground">use juri::Router;
+
+let router = Router::new();
+</code></pre>
+<h2 id="添加处理函数"><a class="header" href="#添加处理函数">添加处理函数</a></h2>
+<h3 id="at-方式"><a class="header" href="#at-方式">At 方式</a></h3>
+<p>只支持 <code>get</code> 和 <code>post</code> 两种请求方式</p>
+<pre><code class="language-rust noplayground">use juri::Router;
+
+let mut router = Router::new();
+
+router.at(&quot;/&quot;).get(handle_fn);
+
+/// 路径一样时，可以链式调用
+router.at(&quot;/&quot;).get(handle_fn).post(handle_fn);
+</code></pre>
+<p>函数定义 </p>
+<pre><code class="language-rust noplayground">use juri::{handler, Request, Response};
+
+/// 支持同步和异步。异步时在 `fn` 前添加 `async`
+#[handler]
+fn handle_fn(request: &amp;Request) -&gt; juri::Result&lt;Response&gt; {
+    /// body
+}
+</code></pre>
+<h3 id="route-方式"><a class="header" href="#route-方式">Route 方式</a></h3>
+<p>只支持 <code>get</code> 和 <code>post</code> 两种请求方式，另外支持 ws</p>
+<pre><code class="language-rust noplayground">use juri::Router;
+
+let mut router = Router::new();
+
+/// 由函数提供，请求方法和路径
+router.route(handle_fn);
+</code></pre>
+<p>函数定义 </p>
+<pre><code class="language-rust noplayground">use juri::{get, post, Request, Response, WSRequest, WSResponse};
+
+/// 支持同步和异步。异步时在 `fn` 前添加 `async`
+#[get(&quot;/&quot;)]
+fn handle_fn(request: &amp;Request) -&gt; juri::Result&lt;Response&gt; {
+    /// body
+}
+
+/// 使用 ws 时，只需在 `get` 宏中加 ws 参数即可，其他同 get 请求格式
+#[get(&quot;/&quot;, ws)]
+fn handle_fn_ws(request: &amp;juri::Request) -&gt; juri::Result&lt;WSResponse&gt; {
+    /// body
+}
+
+/// 支持同步和异步。异步时在 `fn` 前添加 `async`
+#[post(&quot;/&quot;)]
+fn handle_fn_post(request: &amp;Request) -&gt; juri::Result&lt;Response&gt; {
+    /// body
+}
+</code></pre>
+<h2 id="路由器分组"><a class="header" href="#路由器分组">路由器分组</a></h2>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use juri::Router;
+
+let mut router = Router::new();
+router.at(&quot;/&quot;).get(handle_fn);
+
+let mut child_router = Router::new();
+child_router.at(&quot;/one&quot;).get(child_handle_fn);
+
+/// 此时，`/` 和 `/one` 都可以处理
+router.router(child_router);
+<span class="boring">}
+</span></code></pre></pre>
+<p>子路由添加根路径</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use juri::Router;
+
+let mut router = Router::new();
+router.at(&quot;/&quot;).get(handle_fn);
+
+let mut child_router = Router::new();
+child_router.root(&quot;/hi&quot;);
+child_router.at(&quot;/one&quot;).get(child_handle_fn);
+
+/// 此时处理 `/` 和 `/hi/one`
+/// 也就是路径是 `/hi/one`，才执行 `child_handle_fn` 函数
+router.router(child_router);
+<span class="boring">}
+</span></code></pre></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                                                    <a rel="prev" href="../getting-started.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+                                                    <a rel="next" href="../router/route-matching-syntax.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                                    <a rel="prev" href="../getting-started.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+                                    <a rel="next" href="../router/route-matching-syntax.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                            </nav>
+
+        </div>
+
+        
+        
+        
+                <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+        
+                <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+        
+    </body>
+</html>
