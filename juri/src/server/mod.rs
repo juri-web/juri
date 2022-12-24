@@ -21,7 +21,7 @@ impl Server {
         Server {
             addr,
             plugins: vec![],
-            config: Config::new(),
+            config: Config::default(),
         }
     }
 

@@ -3,7 +3,8 @@ use crate::{
     error::ResponseAndError,
     plugin::JuriPlugin,
     routing::{MatchRouteHandler, MatchRouter},
-    Config, Response, ResponseBody, web_socket::WSStream,
+    web_socket::WSStream,
+    Config, Response, ResponseBody,
 };
 use async_std::{net::TcpStream, sync::Arc};
 use colored::*;
@@ -62,11 +63,11 @@ pub async fn handle_request(
                                     ResponseAndError::Response(response) => response,
                                 },
                             }
-                        },
+                        }
                         MatchRouteHandler::WS(handler) => {
                             let ws_response = handler.call(&request).await;
                             match ws_response {
-                                Ok(mut ws_response) => { 
+                                Ok(mut ws_response) => {
                                     println!(
                                         "{}: WebSocket Response {} {} {}",
                                         "INFO".green(),
@@ -74,12 +75,18 @@ pub async fn handle_request(
                                         request.path,
                                         ws_response.response.status_code
                                     );
-                                    send_stream(&mut stream, &config, Some(&request), &ws_response.into_response()).await;
+                                    send_stream(
+                                        &mut stream,
+                                        &config,
+                                        Some(&request),
+                                        &ws_response.into_response(),
+                                    )
+                                    .await;
                                     if let Some(callback) = ws_response.callback {
-                                        callback(WSStream::new(stream)).await;
-                                    } 
+                                        callback(WSStream::new(stream, config.ws.clone())).await;
+                                    }
                                     break;
-                                },
+                                }
                                 Err(err) => match err {
                                     ResponseAndError::Error(e) => Response {
                                         status_code: e.code,
@@ -89,7 +96,7 @@ pub async fn handle_request(
                                     ResponseAndError::Response(response) => response,
                                 },
                             }
-                        },
+                        }
                         MatchRouteHandler::None => Response {
                             status_code: 404,
                             headers: HashMap::new(),

@@ -1,6 +1,8 @@
 use async_std::{io::ReadExt, net::TcpStream};
 use byteorder::{NetworkEndian, ReadBytesExt};
-use std::io::{Cursor, Read};
+use std::{io::{Cursor, Read}, time::Duration};
+
+use super::WSConfig;
 
 #[derive(Clone)]
 pub enum OpCode {
@@ -233,20 +235,30 @@ impl Frame {
 }
 
 impl Frame {
-    pub async fn read_frame(stream: &mut TcpStream) -> std::result::Result<Frame, crate::Error> {
-        let frame_bytes = Frame::read_stream(stream).await?;
+    pub async fn read_frame(stream: &mut TcpStream, config: &WSConfig) -> std::result::Result<Frame, crate::Error> {
+        let frame_bytes = Frame::read_stream(stream, config).await?;
         Frame::parse(frame_bytes).await
     }
 
-    async fn read_stream(stream: &mut TcpStream) -> std::result::Result<Vec<u8>, crate::Error> {
+    async fn read_stream(stream: &mut TcpStream, config: &WSConfig) -> std::result::Result<Vec<u8>, crate::Error> {
         let mut frame_bytes = vec![];
         loop {
             let mut buffer = vec![0u8; BUFFER_SIZE];
 
-            let bytes_count = stream.read(&mut buffer).await.map_err(|e| crate::Error {
+            let dur = Duration::from_secs(config.keep_alive_timeout);
+
+            let bytes_count = async_std::future::timeout(dur, async {
+                let bytes_count = stream.read(&mut buffer).await.map_err(|e| crate::Error {
+                    code: 500,
+                    reason: e.to_string(),
+                })?;
+                Ok(bytes_count)
+            })
+            .await
+            .map_err(|e| crate::Error {
                 code: 500,
                 reason: e.to_string(),
-            })?;
+            })??;
 
             if bytes_count == 0 {
                 break;

@@ -1,3 +1,4 @@
+mod config;
 mod frame;
 mod message;
 mod request;
@@ -6,6 +7,7 @@ mod stream;
 
 use crate::Request;
 use async_trait::async_trait;
+pub use config::WSConfig;
 pub use message::Message;
 pub use request::RequestExt;
 pub use response::WSResponse;

@@ -1,18 +1,21 @@
 use super::{
     frame::{Frame, OpCode},
     message::{IncompleteMessage, IncompleteMessageType, Message},
+    WSConfig,
 };
-use async_std::{net::TcpStream, io::WriteExt};
+use async_std::{io::WriteExt, net::TcpStream};
 
 /// 参考 https://github.com/snapview/tungstenite-rs
 pub struct WSStream {
+    config: WSConfig,
     stream: TcpStream,
     incomplete: Option<IncompleteMessage>,
 }
 
 impl WSStream {
-    pub fn new(stream: TcpStream) -> Self {
+    pub fn new(stream: TcpStream, config: WSConfig) -> Self {
         WSStream {
+            config,
             stream,
             incomplete: None,
         }
@@ -22,7 +25,7 @@ impl WSStream {
 impl WSStream {
     pub async fn read(&mut self) -> Result<Message, crate::Error> {
         loop {
-            let mut frame = Frame::read_frame(&mut self.stream).await?;
+            let mut frame = Frame::read_frame(&mut self.stream, &self.config).await?;
             frame.apply_mask();
             match frame.header.opcode {
                 OpCode::Continue => {
