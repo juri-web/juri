@@ -1,11 +1,11 @@
 use super::response::WSResponse;
 use crate::{HTTPMethod, Request};
 
-pub trait RequestExt {
+pub trait WSRequestExt {
     fn upgrader(&self) -> crate::Result<WSResponse>;
 }
 
-impl RequestExt for Request {
+impl WSRequestExt for Request {
     fn upgrader(&self) -> crate::Result<WSResponse> {
         if self.method != HTTPMethod::GET {
             Err(crate::Error {

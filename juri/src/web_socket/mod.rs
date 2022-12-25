@@ -9,7 +9,7 @@ use crate::Request;
 use async_trait::async_trait;
 pub use config::WSConfig;
 pub use message::Message;
-pub use request::RequestExt;
+pub use request::WSRequestExt;
 pub use response::WSResponse;
 pub use stream::WSStream;
 
@@ -20,7 +20,7 @@ pub trait WSHandler: Send + Sync {
 
 #[cfg(test)]
 mod test {
-    use super::{message::Message, RequestExt, WSResponse};
+    use super::{message::Message, WSRequestExt, WSResponse};
     use crate::Request;
 
     fn test_handle_success(request: &Request) -> crate::Result<WSResponse> {
