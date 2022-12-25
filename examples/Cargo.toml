@@ -1,2 +1,2 @@
 [workspace]
-members = ["example", "web-socket"]
+members = ["basic", "web-socket"]
