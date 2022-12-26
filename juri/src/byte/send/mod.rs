@@ -53,7 +53,7 @@ fn generate_response_header_bytes(
         headers.insert("Content-Length".into(), content_length.to_string());
     }
 
-    for (key, value) in response.headers.iter() {
+    for (key, value) in headers.iter() {
         headers_str.push_str(format!("{}: {}\r\n", key, value).as_str());
     }
 
