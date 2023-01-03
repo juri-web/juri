@@ -1,7 +1,5 @@
-mod receive;
-mod stream;
+mod read;
 mod send;
 
-pub use receive::handle_bytes;
+pub use read::{read_request, FormData};
 pub use send::send_stream;
-pub use stream::FormData;
