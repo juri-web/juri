@@ -19,7 +19,7 @@ pub struct MultipartFormData {
 }
 
 impl MultipartFormData {
-    pub async fn handle_bytes(&mut self, body_bytes: &mut Vec<u8>) {
+    pub async fn write(&mut self, body_bytes: &mut Vec<u8>) -> Result<(), crate::Error> {
         let boundary_start_vec = format!("--{}", self.boundary).as_bytes().to_vec();
         let boundary_end_vec = format!("--{}--", self.boundary).as_bytes().to_vec();
         let cache_file_path = get_cache_file_path();
@@ -46,11 +46,12 @@ impl MultipartFormData {
                     if let Some(temp_form_data) = self.temp_form_data.as_mut() {
                         let file_path =
                             cache_file_path.join(temp_form_data.cache_file_name.clone());
-                        let file = OpenOptions::new()
-                            .write(true)
-                            .open(file_path.clone())
-                            .await
-                            .unwrap();
+                        let Ok(file) = OpenOptions::new().write(true).open(file_path.clone()).await else {
+                            return Err(crate::Error {
+                                code: 500,
+                                reason: "FormData: Failed to open file".to_string(),
+                            })
+                        };
                         let file_size = file.metadata().await.unwrap().len();
                         file.set_len(file_size - 2).await.unwrap();
 
@@ -60,12 +61,12 @@ impl MultipartFormData {
 
                     let unix = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
-                        .expect("get_current_unix_err");
+                        .expect("Get current unix err");
                     self.temp_form_data = Some(FormData {
                         name: "".to_string(),
                         file_name: None,
                         content_type: None,
-                        cache_file_name: "".to_owned(),
+                        cache_file_name: "".to_string(),
 
                         _create_time_seconds: unix.as_secs(),
                         _create_time_nanosecond: unix.subsec_nanos(),
@@ -75,11 +76,12 @@ impl MultipartFormData {
                     if let Some(temp_form_data) = self.temp_form_data.as_mut() {
                         let file_path =
                             cache_file_path.join(temp_form_data.cache_file_name.clone());
-                        let file = OpenOptions::new()
-                            .write(true)
-                            .open(file_path.clone())
-                            .await
-                            .unwrap();
+                        let Ok(file) = OpenOptions::new().write(true).open(file_path.clone()).await else {
+                            return Err(crate::Error {
+                                code: 500,
+                                reason: "FormData: Failed to open file".to_string(),
+                            })
+                        };
                         let file_size = file.metadata().await.unwrap().len();
                         file.set_len(file_size - 2).await.unwrap();
 
@@ -99,30 +101,14 @@ impl MultipartFormData {
                         if key == "Content-Disposition" {
                             let mut str_split = value.split(";");
                             str_split.next();
-                            if let Some(name_str) = str_split.next() {
-                                let name_str = name_str.trim();
-                                let re = Regex::new("^(.*?)=\"(.*?)\"$").unwrap();
-                                let caps = re.captures(&name_str).unwrap();
-                                let key = caps
-                                    .get(1)
-                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
-                                let value = caps
-                                    .get(2)
-                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                            if let Some(name) = str_split.next() {
+                                let (key, value) = FormData::get_header(name.trim());
                                 if key == "name" {
                                     temp_form_data.name = value.trim().to_string();
                                 }
                             }
-                            if let Some(file_name_str) = str_split.next() {
-                                let file_name_str = file_name_str.trim();
-                                let re = Regex::new("^(.*?)=\"(.*?)\"$").unwrap();
-                                let caps = re.captures(&file_name_str).unwrap();
-                                let key = caps
-                                    .get(1)
-                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
-                                let value = caps
-                                    .get(2)
-                                    .map_or("".to_string(), |m| m.as_str().trim().to_string());
+                            if let Some(file_name) = str_split.next() {
+                                let (key, value) = FormData::get_header(file_name.trim());
                                 if key == "filename" {
                                     temp_form_data.file_name = Some(value.trim().to_string());
                                 }
@@ -182,6 +168,7 @@ impl MultipartFormData {
                 file.write(&bytes).await.unwrap();
             }
         }
+        Ok(())
     }
 }
 
@@ -215,5 +202,17 @@ impl FormData {
         let cache_file_path = get_cache_file_path();
         let file_path = cache_file_path.join(self.cache_file_name.clone());
         std::fs::File::open(file_path)
+    }
+
+    fn get_header(header: &str) -> (String, String) {
+        let re = Regex::new("^(.*?)=\"(.*?)\"$").unwrap();
+        let caps = re.captures(&header).unwrap();
+        let key = caps
+            .get(1)
+            .map_or("".to_string(), |m| m.as_str().trim().to_string());
+        let value = caps
+            .get(2)
+            .map_or("".to_string(), |m| m.as_str().trim().to_string());
+        (key, value)
     }
 }

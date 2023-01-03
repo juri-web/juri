@@ -57,12 +57,13 @@ impl ReadStream {
         }
     }
 
-    pub async fn write_body(&mut self, body_bytes: &mut Vec<u8>) {
+    pub async fn write_body(&mut self, body_bytes: &mut Vec<u8>) -> Result<(), crate::Error> {
         if let Some(multipart_form_data) = self.multipart_form_data.as_mut() {
-            multipart_form_data.handle_bytes(body_bytes).await;
+            multipart_form_data.write(body_bytes).await?;
         } else {
             self.body_bytes.append(body_bytes);
         }
+        Ok(())
     }
 
     pub fn header_end(&mut self) {

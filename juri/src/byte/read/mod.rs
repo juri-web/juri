@@ -78,7 +78,7 @@ pub async fn read_request(
         let mut already_read_body_length: usize = 0;
         if let Some(body_bytes) = &mut line.get_residue_bytes() {
             already_read_body_length = body_bytes.len();
-            read_stream.write_body(body_bytes).await;
+            read_stream.write_body(body_bytes).await?;
         }
         if !is_read_body_finish {
             loop {
@@ -87,7 +87,7 @@ pub async fn read_request(
                     break;
                 }
                 let body_bytes = &mut buffer[..bytes_count].to_vec();
-                read_stream.write_body(body_bytes).await;
+                read_stream.write_body(body_bytes).await?;
                 if bytes_count < BUFFER_SIZE {
                     break;
                 }
@@ -103,7 +103,7 @@ pub async fn read_request(
                         }
 
                         let body_bytes = &mut buffer[..bytes_count].to_vec();
-                        read_stream.write_body(body_bytes).await;
+                        read_stream.write_body(body_bytes).await?;
 
                         if bytes_count < BUFFER_SIZE {
                             break;
