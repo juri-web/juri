@@ -23,3 +23,31 @@ pub fn match_route_params(
     }
     None
 }
+
+
+#[test]
+fn test_match_route_params() {
+    let params_map = match_route_params("^/aa$".to_string(), vec![], "/aa".to_string());
+    assert_ne!(params_map, None);
+
+    let params_map = match_route_params(
+        "^/aa/([^/]*?)$".to_string(),
+        vec!["bb".to_string()],
+        "/aa/11".to_string(),
+    );
+    assert_ne!(params_map, None);
+
+    let params_map = match_route_params(
+        "^/aa/([^/]*?)/cc$".to_string(),
+        vec!["bb".to_string()],
+        "/aa/11/cc".to_string(),
+    );
+    assert_ne!(params_map, None);
+
+    let params_map = match_route_params(
+        "^/aa/(.+)$".to_string(),
+        vec!["bb".to_string()],
+        "/aa/11/cc".to_string(),
+    );
+    assert_ne!(params_map, None);
+}

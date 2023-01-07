@@ -2,9 +2,10 @@ use super::{
     super::{RouteHandlerMap, WSRouterHandlerMap},
     route::MatchRoute,
 };
-use crate::{request::HTTPMethod, response::HTTPHandler, Request, Router, web_socket::WSHandler};
-use std::{cmp::Ordering, collections::HashMap, sync::Arc};
+use crate::{request::HTTPMethod, response::HTTPHandler, web_socket::WSHandler, Request, Router};
+use std::{cmp::Ordering, sync::Arc};
 
+#[derive(Default)]
 pub struct MatchRouter {
     pub get: Vec<MatchRoute>,
     pub post: Vec<MatchRoute>,
@@ -15,64 +16,46 @@ pub struct MatchRouter {
 
 impl MatchRouter {
     pub fn new(router: Router) -> Self {
-        let mut match_router = MatchRouter {
-            get: vec![],
-            post: vec![],
-            handler: HashMap::new(),
-            ws_handler: HashMap::new(),
-        };
-        match_router.summary_router(&router);
+        let mut match_router = MatchRouter::default();
+        match_router.summary_router(&router, String::default());
         match_router.sort();
         match_router
     }
-    pub fn summary_router(&mut self, router: &Router) {
+    pub fn summary_router(&mut self, router: &Router, mut root: String) {
         if let Some(root_path) = &router.root {
-            self.get.append(
-                &mut router
-                    .get
-                    .iter()
-                    .map(|route| {
-                        MatchRoute::new(
-                            format!("{}{}", root_path, route.0.clone()),
-                            route.1.clone(),
-                        )
-                    })
-                    .collect(),
-            );
-            self.post.append(
-                &mut router
-                    .post
-                    .iter()
-                    .map(|route| {
-                        MatchRoute::new(
-                            format!("{}{}", root_path, route.0.clone()),
-                            route.1.clone(),
-                        )
-                    })
-                    .collect(),
-            );
-        } else {
-            self.get.append(
-                &mut router
-                    .get
-                    .iter()
-                    .map(|route| MatchRoute::new(route.0.clone(), route.1.clone()))
-                    .collect(),
-            );
-            self.post.append(
-                &mut router
-                    .post
-                    .iter()
-                    .map(|route| MatchRoute::new(route.0.clone(), route.1.clone()))
-                    .collect(),
-            );
+            root.push_str(root_path.as_str());
         }
+
+        self.get.append(
+            &mut router
+                .get
+                .iter()
+                .map(|route| {
+                    MatchRoute::new(
+                        format!("{}{}", root, route.0.clone()),
+                        route.1.clone(),
+                    )
+                })
+                .collect(),
+        );
+        self.post.append(
+            &mut router
+                .post
+                .iter()
+                .map(|route| {
+                    MatchRoute::new(
+                        format!("{}{}", root, route.0.clone()),
+                        route.1.clone(),
+                    )
+                })
+                .collect(),
+        );
 
         self.handler.extend(router.handler.clone());
         self.ws_handler.extend(router.ws_handler.clone());
 
         for router in router.router.iter() {
-            MatchRouter::summary_router(self, router);
+            MatchRouter::summary_router(self, router, root.clone());
         }
     }
 
@@ -138,29 +121,43 @@ impl MatchRouter {
     }
 }
 
-// #[test]
-// fn test_match_route_path() {
-//     let params_map = match_route_path("^/aa$".to_string(), vec![], "/aa".to_string());
-//     assert_ne!(params_map, None);
+#[cfg(test)]
+mod test {
+    use crate::prelude::*;
+    use super::MatchRouter;
 
-//     let params_map = match_route_path(
-//         "^/aa/([^/]*?)$".to_string(),
-//         vec!["bb".to_string()],
-//         "/aa/11".to_string(),
-//     );
-//     assert_ne!(params_map, None);
+    #[get("/hi", internal)]
+    fn hi(_request: &Request) -> crate::Result<Response> {
+        Ok(Response::html("hi"))
+    }
 
-//     let params_map = match_route_path(
-//         "^/aa/([^/]*?)/cc$".to_string(),
-//         vec!["bb".to_string()],
-//         "/aa/11/cc".to_string(),
-//     );
-//     assert_ne!(params_map, None);
+    fn child_child_router() -> Router {
+        let mut router = Router::new();
+        router.root("/child");
+        router.route(hi());
+        router
+    }
 
-//     let params_map = match_route_path(
-//         "^/aa/(.+)$".to_string(),
-//         vec!["bb".to_string()],
-//         "/aa/11/cc".to_string(),
-//     );
-//     assert_ne!(params_map, None);
-// }
+    fn child_router() -> Router {
+        let mut router = Router::new();
+        router.root("/me");
+        router.route(hi());
+        router.router(child_child_router());
+        router
+    }
+
+    #[test]
+    fn test_match_router() {
+        let mut router = Router::new();
+        router.root("/my");
+        router.route(hi());
+        router.router(child_router());
+
+        let match_router = MatchRouter::new(router);
+        let get_list = match_router.get;
+
+        assert_eq!(get_list[0].path, String::from("^/my/me/hi$"));
+        assert_eq!(get_list[1].path, String::from("^/my/me/child/hi$"));
+        assert_eq!(get_list[2].path, String::from("^/my/hi$"));
+    }
+}

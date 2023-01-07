@@ -4,6 +4,7 @@ mod config;
 mod error;
 pub mod json;
 pub mod plugin;
+pub mod prelude;
 mod request;
 mod response;
 mod routing;
