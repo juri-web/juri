@@ -7,6 +7,7 @@ use regex::Regex;
 use std::{
     collections::hash_map::DefaultHasher,
     hash::{Hash, Hasher},
+    path::Path,
     time::{SystemTime, UNIX_EPOCH},
 };
 
@@ -198,10 +199,38 @@ pub struct FormData {
 }
 
 impl FormData {
-    pub fn open(self) -> std::io::Result<std::fs::File> {
+    pub fn open(&self) -> std::io::Result<std::fs::File> {
         let cache_file_path = get_cache_file_path();
         let file_path = cache_file_path.join(self.cache_file_name.clone());
         std::fs::File::open(file_path)
+    }
+
+    pub fn copy<Q>(&self, to: Q) -> std::io::Result<u64>
+    where
+        Q: AsRef<Path>,
+    {
+        let cache_file_path = get_cache_file_path();
+        let file_path = cache_file_path.join(self.cache_file_name.clone());
+        std::fs::copy(file_path, to)
+    }
+
+    pub fn file_size(&self) -> std::io::Result<u64> {
+        let file = self.open()?;
+        let metadata = file.metadata()?;
+        Ok(metadata.len())
+    }
+
+    pub fn file_type(&self) -> Option<String> {
+        if let Some(file_name) = &self.file_name {
+            let re = Regex::new(r"\.(.*?)$").unwrap();
+            let caps = re.captures(&file_name);
+            if let Some(caps) = caps {
+                if let Some(value) = caps.get(1) {
+                    return Some(value.as_str().to_string());
+                }
+            }
+        }
+        None
     }
 
     fn get_header(header: &str) -> (String, String) {
