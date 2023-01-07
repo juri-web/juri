@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>介绍 - Juri 文档</title>
+        <title>FormData - Juri 文档</title>
                 
 
         <!-- Custom HTML head -->
@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="../router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">请求（Request）</li><li class="chapter-item expanded "><a href="../request/introduction.html"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../request/form-data.html"><strong aria-hidden="true">4.</strong> FormData</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="../web-socket/introduction.html"><strong aria-hidden="true">5.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">插件（plugin）</li><li class="chapter-item expanded "><a href="../plugin/introduction.html" class="active"><strong aria-hidden="true">6.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../plugin/plugin-static-file.html"><strong aria-hidden="true">7.</strong> 静态文件插件</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="../router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">请求（Request）</li><li class="chapter-item expanded "><a href="../request/introduction.html"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../request/form-data.html" class="active"><strong aria-hidden="true">4.</strong> FormData</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="../web-socket/introduction.html"><strong aria-hidden="true">5.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">插件（plugin）</li><li class="chapter-item expanded "><a href="../plugin/introduction.html"><strong aria-hidden="true">6.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../plugin/plugin-static-file.html"><strong aria-hidden="true">7.</strong> 静态文件插件</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -146,71 +146,53 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h2 id="插件"><a class="header" href="#插件">插件</a></h2>
-<p>创建插件需要实现以下 JuriPlugin trait</p>
+                        <h1 id="formdata"><a class="header" href="#formdata">FormData</a></h1>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub trait JuriPlugin: Send + Sync + 'static {
-    /// 请求拦截器
-    fn request(&amp;self, request: &amp;mut Request) -&gt; Option&lt;Response&gt;;
-    /// 响应拦截器
-    fn response(&amp;self, request: &amp;Request, response: &amp;mut Response);
-}
+</span>/// 获取单个文件，返回 Option 类型
+request.file(&quot;file&quot;);
+/// 获取多个 name 值一样的文件 ，返回 Vec 类型
+request.files(&quot;file&quot;);
 <span class="boring">}
 </span></code></pre></pre>
-<p>例：</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use juri::plugin::JuriPlugin;
+</span>let file = request.file(&quot;file&quot;).unwrap();
 
-struct MyPlugin {
+/// 打开缓存文件
+file.open();
 
-}
+/// 获取缓存文件大小
+file.file_size();
 
-impl JuriPlugin for MyPlugin {
-    fn request(&amp;self, request: &amp;mut Request) -&gt; Option&lt;Response&gt; {
-        /// 可修改请求内容
-
-        /// 返回是 `None` 时，继续执行
-        /// or
-        /// 返回是 `Response` 时，拦截接下来的操作
-
-
-        /// 例：插件有 `[1, 2, 3]`
-        /// 插件 2 返回 `Response` 时，执行顺序为 request：1 - 2，response： 2 - 1
-        /// 都为 `None` 时，执行顺序为 request：1 - 2 - 3，匹配路由，response： 3 - 2 - 1
-    }
-
-    fn response(&amp;self, request: &amp;Request, response: &amp;mut Response) {
-        /// 可修改请求内容和响应内容
-    }
-}
+/// 获取文件类型
+file.file_type();
 <span class="boring">}
 </span></code></pre></pre>
-<h2 id="使用"><a class="header" href="#使用">使用</a></h2>
+<h2 id="复制缓存文件到指定路径"><a class="header" href="#复制缓存文件到指定路径">复制缓存文件到指定路径</a></h2>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>let my_plugin = MyPlugin {};
+</span>let file = request.file(&quot;file&quot;).unwrap();
+let file_name = file.file_name.clone().unwrap();
+let path = format!(&quot;/home/upload/{}&quot;, file_name);
+let path = Path::new(&amp;path);
 
-/// 生成 `MyPlugin` 实例传入 `plugin` 函数
-juri::Server::bind(addr).plugin(my_plugin);
+file.copy(path).unwrap();
 <span class="boring">}
 </span></code></pre></pre>
-<h2 id="内置插件"><a class="header" href="#内置插件">内置插件</a></h2>
-<p><a href="./plugin-static-file.html">静态文件插件</a></p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                                                    <a rel="prev" href="../web-socket/introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                                    <a rel="prev" href="../request/introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
-                                                    <a rel="next" href="../plugin/plugin-static-file.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                                    <a rel="next" href="../web-socket/introduction.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <i class="fa fa-angle-right"></i>
                             </a>
                         
@@ -220,11 +202,11 @@ juri::Server::bind(addr).plugin(my_plugin);
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                                    <a rel="prev" href="../web-socket/introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                    <a rel="prev" href="../request/introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
-                                    <a rel="next" href="../plugin/plugin-static-file.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                    <a rel="next" href="../web-socket/introduction.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <i class="fa fa-angle-right"></i>
                     </a>
                             </nav>

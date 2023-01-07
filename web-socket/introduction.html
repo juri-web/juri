@@ -82,7 +82,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="../router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="../web-socket/introduction.html" class="active"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">Plugin</li><li class="chapter-item expanded "><a href="../plugin/introduction.html"><strong aria-hidden="true">4.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../plugin/plugin-static-file.html"><strong aria-hidden="true">5.</strong> 静态文件插件</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="../router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">请求（Request）</li><li class="chapter-item expanded "><a href="../request/introduction.html"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../request/form-data.html"><strong aria-hidden="true">4.</strong> FormData</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="../web-socket/introduction.html" class="active"><strong aria-hidden="true">5.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">插件（plugin）</li><li class="chapter-item expanded "><a href="../plugin/introduction.html"><strong aria-hidden="true">6.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="../plugin/plugin-static-file.html"><strong aria-hidden="true">7.</strong> 静态文件插件</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -182,7 +182,7 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
     Ok(ws)
 
     /// 也可以自定义返回
-    // Ok(WSResponse::new(Response::html_str(&quot;&quot;)))
+    // Ok(WSResponse::new(Response::html(&quot;&quot;)))
 }
 <span class="boring">}
 </span></code></pre></pre>
@@ -191,7 +191,7 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                                                    <a rel="prev" href="../router/route-matching-syntax.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                                    <a rel="prev" href="../request/form-data.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
@@ -205,7 +205,7 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                                    <a rel="prev" href="../router/route-matching-syntax.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                    <a rel="prev" href="../request/form-data.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 

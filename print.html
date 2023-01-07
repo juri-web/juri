@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="web-socket/introduction.html"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">Plugin</li><li class="chapter-item expanded "><a href="plugin/introduction.html"><strong aria-hidden="true">4.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="plugin/plugin-static-file.html"><strong aria-hidden="true">5.</strong> 静态文件插件</a></li></ol>            </div>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="getting-started.html">开始</a></li><li class="chapter-item expanded affix "><li class="part-title">路由器</li><li class="chapter-item expanded "><a href="router/introduction.html"><strong aria-hidden="true">1.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="router/route-matching-syntax.html"><strong aria-hidden="true">2.</strong> 路由的匹配语法</a></li><li class="chapter-item expanded affix "><li class="part-title">请求（Request）</li><li class="chapter-item expanded "><a href="request/introduction.html"><strong aria-hidden="true">3.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="request/form-data.html"><strong aria-hidden="true">4.</strong> FormData</a></li><li class="chapter-item expanded affix "><li class="part-title">WebSocket</li><li class="chapter-item expanded "><a href="web-socket/introduction.html"><strong aria-hidden="true">5.</strong> 介绍</a></li><li class="chapter-item expanded affix "><li class="part-title">插件（plugin）</li><li class="chapter-item expanded "><a href="plugin/introduction.html"><strong aria-hidden="true">6.</strong> 介绍</a></li><li class="chapter-item expanded "><a href="plugin/plugin-static-file.html"><strong aria-hidden="true">7.</strong> 静态文件插件</a></li></ol>            </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
 
@@ -164,9 +164,10 @@
 <p><a href="https://crates.io/crates/juri">Crates 地址</a></p>
 <p>cargo:</p>
 <pre><code class="language-shell">cargo add juri 
+cargo add async-std
 </code></pre>
 <p>或者</p>
-<p>在 Cargo.toml 文件里添加 <code>juri = &quot;0.4.0-alpha.1&quot;</code></p>
+<p>在 Cargo.toml 文件里添加 <code>juri = &quot;0.4.0-alpha.2&quot;</code></p>
 <h2 id="使用"><a class="header" href="#使用">使用</a></h2>
 <p>最小 Demo:</p>
 <pre><code class="language-rust noplayground">use juri::{Request, Response, Router, handler};
@@ -174,7 +175,7 @@ use std::net::SocketAddr;
 
 #[handler]
 fn handle_index(_request: &amp;Request) -&gt; juri::Result&lt;Response&gt; {
-    Ok(Response::html_str(&quot;Hello Juri&quot;))
+    Ok(Response::html(&quot;Hello Juri&quot;))
 }
 
 #[juri::main]
@@ -301,6 +302,46 @@ router.get(&quot;/one/:chapters/three&quot;, handle_index);
 /// /one/two/three 时 `request.param(&quot;chapters&quot;) == two/three
 router.get(&quot;/one/:chapters+&quot;, handle_index);
 </code></pre>
+<div style="break-before: page; page-break-before: always;"></div><h2 id="请求request"><a class="header" href="#请求request">请求（Request）</a></h2>
+<h2 id="formdata"><a class="header" href="#formdata">FormData</a></h2>
+<p><a href="request/./form-data.html">FormData</a></p>
+<div style="break-before: page; page-break-before: always;"></div><h1 id="formdata-1"><a class="header" href="#formdata-1">FormData</a></h1>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 获取单个文件，返回 Option 类型
+request.file(&quot;file&quot;);
+/// 获取多个 name 值一样的文件 ，返回 Vec 类型
+request.files(&quot;file&quot;);
+<span class="boring">}
+</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let file = request.file(&quot;file&quot;).unwrap();
+
+/// 打开缓存文件
+file.open();
+
+/// 获取缓存文件大小
+file.file_size();
+
+/// 获取文件类型
+file.file_type();
+<span class="boring">}
+</span></code></pre></pre>
+<h2 id="复制缓存文件到指定路径"><a class="header" href="#复制缓存文件到指定路径">复制缓存文件到指定路径</a></h2>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let file = request.file(&quot;file&quot;).unwrap();
+let file_name = file.file_name.clone().unwrap();
+let path = format!(&quot;/home/upload/{}&quot;, file_name);
+let path = Path::new(&amp;path);
+
+file.copy(path).unwrap();
+<span class="boring">}
+</span></code></pre></pre>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="websocket-是啥"><a class="header" href="#websocket-是啥">WebSocket 是啥</a></h2>
 <p>WebSocket 是一种网络传输协议，可在单个 TCP 连接上进行全双工通信，位于 OSI 模型的应用层。具体可以参考 <a href="https://zh.m.wikipedia.org/zh-hans/WebSocket">维基百科</a></p>
 <p>JavaScript 的 WebSocket 使用可以参考 <a href="https://developer.mozilla.org/zh-CN/docs/Web/API/WebSocket">MDN 文档</a></p>
@@ -337,7 +378,7 @@ pub fn handle_ws(&amp;request: Request) -&gt; juri::Result&lt;WSResponse&gt; {
     Ok(ws)
 
     /// 也可以自定义返回
-    // Ok(WSResponse::new(Response::html_str(&quot;&quot;)))
+    // Ok(WSResponse::new(Response::html(&quot;&quot;)))
 }
 <span class="boring">}
 </span></code></pre></pre>
