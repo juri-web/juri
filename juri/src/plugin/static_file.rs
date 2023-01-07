@@ -1,5 +1,4 @@
 use crate::{request::HTTPMethod, routing::match_route_params, plugin::JuriPlugin, Request, Response};
-use regex::Regex;
 use std::{collections::HashMap, path::PathBuf};
 
 pub struct StaticFilePlugin {
@@ -42,25 +41,9 @@ impl JuriPlugin for StaticFilePlugin {
                 ) {
                     if let Some(url_path) = params_map.get("url_path") {
                         if let Some(file_path) = self.find_file_path(re_url, url_path) {
-                            let mut headers = HashMap::new();
-                            let re = Regex::new(r"\.(.*?)$").unwrap();
-                            if let Some(caps) = re.captures(&url_path) {
-                                if let Some(extension) = caps.get(1) {
-                                    if let Some(content_type) =
-                                        extension_to_mime(extension.as_str())
-                                    {
-                                        headers.insert(
-                                            "Content-Type".to_string(),
-                                            content_type.to_string(),
-                                        );
-                                    }
-                                }
-                            }
-
                             return Some(Response {
-                                status_code: 200,
-                                headers,
                                 body: crate::ResponseBody::Path(file_path),
+                                ..Default::default()
                             });
                         }
                     }
@@ -72,23 +55,6 @@ impl JuriPlugin for StaticFilePlugin {
     }
 
     fn response(&self, _request: &Request, _response: &mut Response) {}
-}
-
-
-/// https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Basics_of_HTTP/MIME_types
-fn extension_to_mime(extension: &str) -> Option<&str> {
-    match extension {
-        "txt" => Some("text/plain"),
-        "html" => Some("text/html"),
-        "css" => Some("text/css"),
-        "js" => Some("text/javascript"),
-
-        "png" => Some("image/png"),
-        "jpg" => Some("image/jpeg"),
-        "gif" => Some("image/gif"),
-        "svg" => Some("image/svg+xml"),
-        _ => None,
-    }
 }
 
 #[test]

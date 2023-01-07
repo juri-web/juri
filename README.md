@@ -15,9 +15,14 @@ HTTP Framework
 
 ## Getting Started
 
-Please refer to [Juri Document](https://luoxiaozero.github.io/juri)
+Please refer to [Juri Document](https://juri-web.github.io/juri)
 
 ## Example
+
+```
+cargo add juri
+cargo add async-std
+```
 
 ```rust
 use juri::{Request, Response, Router, handler};
@@ -25,7 +30,7 @@ use std::net::SocketAddr;
 
 #[handler]
 fn handle_index(_request: &Request) -> juri::Result<Response> {
-    Ok(Response::html_str("Hello Juri"))
+    Ok(Response::html("Hello Juri"))
 }
 
 #[juri::main]

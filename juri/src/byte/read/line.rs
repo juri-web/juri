@@ -1,12 +1,12 @@
 use std::{iter::Iterator, vec};
 
 
-pub struct Newline {
+pub struct Line {
     bytes: Vec<u8>,
     _marker: usize,
 }
 
-impl Newline {
+impl Line {
     pub fn new() -> Self {
         Self {
             bytes: vec![],
@@ -29,7 +29,7 @@ impl Newline {
     }
 }
 
-impl Iterator for Newline {
+impl Iterator for Line {
     type Item = Vec<u8>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -69,7 +69,7 @@ impl Iterator for Newline {
 
 #[test]
 fn test_newline() {
-    let mut line = Newline::new();
+    let mut line = Line::new();
     let mut bytes: Vec<u8> = vec![1, 2, 13, 10];
     line.push(&mut bytes);
 
@@ -77,7 +77,7 @@ fn test_newline() {
     assert_eq!(line.next(), None);
     assert_eq!(line.get_residue_bytes(), None);
 
-    let mut line = Newline::new();
+    let mut line = Line::new();
     let mut bytes: Vec<u8> = vec![1, 2, 13, 10, 2, 3, 13, 10];
     line.push(&mut bytes);
 
@@ -86,7 +86,7 @@ fn test_newline() {
     assert_eq!(line.next(), None);
     assert_eq!(line.get_residue_bytes(), None);
 
-    let mut line = Newline::new();
+    let mut line = Line::new();
     let mut bytes: Vec<u8> = vec![1, 2, 13, 10, 2, 3, 13, 10, 13, 10];
     line.push(&mut bytes);
 
@@ -96,7 +96,7 @@ fn test_newline() {
     assert_eq!(line.next(), None);
     assert_eq!(line.get_residue_bytes(), None);
 
-    let mut line = Newline::new();
+    let mut line = Line::new();
     let mut bytes: Vec<u8> = vec![1, 2, 13];
     line.push(&mut bytes);
 
@@ -107,7 +107,7 @@ fn test_newline() {
     assert_eq!(line.next(), None);
     assert_eq!(line.get_residue_bytes(), None);
 
-    let mut line = Newline::new();
+    let mut line = Line::new();
     let mut bytes: Vec<u8> = vec![1, 2, 13, 10];
     line.push(&mut bytes);
 

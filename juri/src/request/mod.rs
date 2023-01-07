@@ -10,12 +10,12 @@ pub struct Request {
     pub full_path: String,
     pub protocol_and_version: String,
     pub path: String,
-    pub header_map: HashMap<String, String>,
-    pub params_map: HashMap<String, String>,
+    pub(crate) header_map: HashMap<String, String>,
+    pub(crate) params_map: HashMap<String, String>,
     query_str: String,
     pub hash: String,
     pub body_bytes: Vec<u8>,
-    pub multipart_form_data: Vec<FormData>,
+    pub(crate) multipart_form_data: Vec<FormData>,
 }
 
 impl Request {
@@ -81,20 +81,20 @@ impl Request {
         None
     }
 
-    pub fn file(self, name: &str) -> Option<FormData> {
-        for form_data in self.multipart_form_data {
+    pub fn file(&self, name: &str) -> Option<FormData> {
+        for form_data in self.multipart_form_data.iter() {
             if form_data.name == name {
-                return Some(form_data);
+                return Some(form_data.clone());
             }
         }
         None
     }
 
-    pub fn files(self, name: &str) -> Vec<FormData> {
+    pub fn files(&self, name: &str) -> Vec<FormData> {
         let mut form_data_list = vec![];
-        for form_data in self.multipart_form_data {
+        for form_data in self.multipart_form_data.iter() {
             if form_data.name == name {
-                form_data_list.push(form_data);
+                form_data_list.push(form_data.clone());
             }
         }
         form_data_list

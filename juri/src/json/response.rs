@@ -1,18 +1,42 @@
+use crate::{Response, ResponseBody};
 use serde::Serialize;
-use crate::Response;
+use std::collections::HashMap;
 
-pub trait ResponseExt {
-    fn json<T>(value: &T) -> Self
+pub trait JsonResponseExt {
+    fn json<T>(value: &T) -> Result<Response, crate::Error>
     where
         T: ?Sized + Serialize;
 }
 
-impl ResponseExt for Response {
-    fn json<T>(value: &T) -> Self
+impl JsonResponseExt for Response {
+    fn json<T>(value: &T) -> Result<Response, crate::Error>
     where
         T: ?Sized + Serialize,
     {
-        let json_str = serde_json::to_string(value).unwrap();
-        Response::json_str(json_str.as_str())
+        let json_str = serde_json::to_string(value);
+
+        match json_str {
+            Ok(json_str) => Ok(Response {
+                status_code: 200,
+                headers: HashMap::from([(
+                    "Content-Type".into(),
+                    "application/json;charset=utf-8".into(),
+                )]),
+                body: ResponseBody::Text(json_str),
+            }),
+            Err(e) => Err(crate::Error {
+                code: 401,
+                reason: e.to_string(),
+            }),
+        }
+    }
+}
+
+#[test]
+fn main() {
+    let response = Response::json("one").unwrap();
+    if let ResponseBody::Text(text) = response.body {
+        let one = String::from("one");
+        assert_eq!(text, one);
     }
 }

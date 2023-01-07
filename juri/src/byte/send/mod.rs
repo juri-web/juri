@@ -1,11 +1,13 @@
+mod mime;
+mod status_code;
+
+use self::status_code::status_code_to_text;
 use crate::response::ResponseBodyByte;
 use crate::{Config, Request, Response};
 use async_std::fs::File;
 use async_std::{net::TcpStream, prelude::*};
+use mime::extension_to_mime;
 use std::sync::Arc;
-
-use self::status_code::status_code_to_text;
-mod status_code;
 
 pub const CRLF: &str = "\r\n";
 const BUFFER_SIZE: usize = 1024 * 2;
@@ -23,23 +25,36 @@ fn generate_response_header_bytes(
     let server = "Server: Rust\r\n";
     let mut headers_str = format!("{}{}", status, server);
 
-    for (key, value) in response.headers.iter() {
-        headers_str.push_str(format!("{}: {}\r\n", key, value).as_str());
-    }
+    let mut headers = response.headers.clone();
 
     if let Some(request) = request {
         if request.is_keep_alive() {
-            headers_str.push_str("Connection: keep-alive\r\n");
-            headers_str.push_str(
-                format!("Keep-Alive: timeout={}\r\n", config.keep_alive_timeout).as_str(),
+            headers.insert("Connection".into(), "keep-alive".into());
+            headers.insert(
+                "Keep-Alive".into(),
+                format!("timeout={}", config.keep_alive_timeout),
             );
         } else if response.headers.get("Connection").is_none() {
-            headers_str.push_str("Connection: close\r\n");
+            headers.insert("Connection".into(), "close".into());
+        }
+    }
+
+    if let ResponseBodyByte::File(file_path) = response.get_body_bytes() {
+        if let Some(extension) = file_path.extension() {
+            if let Some(extension) = extension.to_str() {
+                if let Some(content_type) = extension_to_mime(extension) {
+                    headers.insert("Content-Type".to_string(), content_type.to_string());
+                }
+            }
         }
     }
 
     if let Some(content_length) = response.get_body_bytes_len() {
-        headers_str.push_str(format!("Content-Length: {}\r\n", content_length,).as_str());
+        headers.insert("Content-Length".into(), content_length.to_string());
+    }
+
+    for (key, value) in headers.iter() {
+        headers_str.push_str(format!("{}: {}\r\n", key, value).as_str());
     }
 
     headers_str.push_str(CRLF);

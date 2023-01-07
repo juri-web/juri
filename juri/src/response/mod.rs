@@ -1,8 +1,9 @@
+mod into;
+
+pub use into::HTTPHandler;
 use std::collections::HashMap;
 use std::fs::metadata;
 use std::path::PathBuf;
-mod into;
-pub use into::HTTPHandler;
 
 #[derive(Debug, Clone)]
 pub enum ResponseBody {
@@ -24,40 +25,22 @@ pub struct Response {
     pub body: ResponseBody,
 }
 
-impl Response {
-    pub fn json_str(contents: &str) -> Self {
-        let mut response = Response {
+impl Default for Response {
+    fn default() -> Self {
+        Self {
             status_code: 200,
-            headers: HashMap::new(),
-            body: ResponseBody::Text(contents.to_string()),
-        };
-        response.headers.insert(
-            "Content-Type".to_string(),
-            "application/json;charset=utf-8".to_string(),
-        );
-        response
-    }
-
-    pub fn html_str(contents: &str) -> Self {
-        let mut response = Response {
-            status_code: 200,
-            headers: HashMap::new(),
-            body: ResponseBody::Text(contents.to_string()),
-        };
-        response.headers.insert(
-            "Content-Type".to_string(),
-            "text/html;charset=utf-8".to_string(),
-        );
-        response
-    }
-
-    pub fn set_status_code(mut self, status_code: u16) -> Self {
-        self.status_code = status_code;
-        self
+            headers: Default::default(),
+            body: ResponseBody::None,
+        }
     }
 }
 
 impl Response {
+    pub fn set_status_code(mut self, status_code: u16) -> Self {
+        self.status_code = status_code;
+        self
+    }
+
     pub fn get_body_bytes_len(&self) -> Option<usize> {
         match &self.body {
             ResponseBody::Text(text) => Some(text.as_bytes().len()),
@@ -75,5 +58,31 @@ impl Response {
             ResponseBody::Path(path) => ResponseBodyByte::File(path.clone()),
             ResponseBody::None => ResponseBodyByte::None,
         }
+    }
+}
+
+impl Response {
+    pub fn html(content: &str) -> Response {
+        Response {
+            status_code: 200,
+            headers: HashMap::from([(
+                "Content-Type".to_string(),
+                "text/html;charset=utf-8".to_string(),
+            )]),
+            body: ResponseBody::Text(content.to_string()),
+        }
+    }
+
+    pub fn html_file(file_path: PathBuf) -> Result<Response, crate::Error> {
+        if file_path.exists() && file_path.is_file() {
+            return Err(crate::Error {
+                code: 401,
+                reason: format!("File cannot be found, FilePath: {:?}", file_path.to_str()),
+            });
+        }
+        Ok(Response {
+            body: crate::ResponseBody::Path(file_path),
+            ..Default::default()
+        })
     }
 }

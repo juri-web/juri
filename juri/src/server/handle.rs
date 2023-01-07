@@ -1,5 +1,5 @@
 use crate::{
-    byte::{handle_bytes, send_stream},
+    byte::{read_request, send_stream},
     error::ResponseAndError,
     plugin::JuriPlugin,
     routing::{MatchRouteHandler, MatchRouter},
@@ -17,11 +17,7 @@ pub async fn handle_request(
     config: Arc<Config>,
 ) {
     loop {
-        let router = Arc::clone(&router);
-        let plugins = Arc::clone(&plugins);
-        let config = Arc::clone(&config);
-
-        match handle_bytes(&mut stream, &config).await {
+        match read_request(&mut stream, &config).await {
             Ok(mut request) => {
                 let peer_addr = stream.peer_addr().unwrap().ip();
                 println!(

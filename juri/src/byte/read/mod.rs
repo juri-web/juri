@@ -1,25 +1,27 @@
-use crate::{byte::stream::JuriStream, Config, Request};
-use async_std::{io::ReadExt, net::TcpStream};
-use std::sync::Arc;
-use std::time::Duration;
-mod newline;
-use self::newline::Newline;
+mod form_data;
+mod line;
+mod stream;
 
+use crate::{Config, Request};
+use async_std::{future::timeout, io::ReadExt, net::TcpStream};
+pub use form_data::FormData;
+use line::Line;
+use std::{sync::Arc, time::Duration};
+use stream::ReadStream;
 const BUFFER_SIZE: usize = 1024 * 2;
 
 async fn read_buffer(
     stream: &mut TcpStream,
     config: &Arc<Config>,
-) -> std::result::Result<(usize, Vec<u8>), crate::Error> {
+) -> Result<(usize, Vec<u8>), crate::Error> {
     let mut buffer = vec![0u8; BUFFER_SIZE];
     let dur = Duration::from_secs(config.keep_alive_timeout);
 
-    let bytes_count = async_std::future::timeout(dur, async {
-        let bytes_count = stream.read(&mut buffer).await.map_err(|e| crate::Error {
+    let bytes_count = timeout(dur, async {
+        stream.read(&mut buffer).await.map_err(|e| crate::Error {
             code: 500,
             reason: e.to_string(),
-        })?;
-        Ok(bytes_count)
+        })
     })
     .await
     .map_err(|e| crate::Error {
@@ -30,34 +32,35 @@ async fn read_buffer(
     Ok((bytes_count, buffer))
 }
 
-pub async fn handle_bytes(
+pub async fn read_request(
     stream: &mut TcpStream,
     config: &Arc<Config>,
 ) -> std::result::Result<Request, crate::Error> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
-    let mut juri_stream = JuriStream::new();
-    let mut newline = Newline::new();
+    let mut read_stream = ReadStream::new();
+    let mut line = Line::new();
 
+    // Body: None 读取完成, True 可能读取完成, False 未完成
     let is_read_body_finish = loop {
-        let (bytes_count, buffer) = read_buffer(stream, &config).await?;
+        let (bytes_count, mut buffer) = read_buffer(stream, &config).await?;
 
         if bytes_count == 0 {
             break None;
         }
 
-        let bytes = &mut buffer[..bytes_count].to_vec();
-        newline.push(bytes);
+        line.push(&mut buffer);
 
         let is_exist_body = loop {
-            if let Some(header_bytes) = newline.next() {
-                if header_bytes.is_empty() {
-                    break true;
-                }
-                juri_stream.handle_request_header_bytes(header_bytes);
-            } else {
+            let Some(header_bytes) = line.next() else {
                 break false;
+            };
+
+            if header_bytes.is_empty() {
+                break true;
             }
+
+            read_stream.write_header(header_bytes);
         };
 
         if is_exist_body {
@@ -69,13 +72,13 @@ pub async fn handle_bytes(
         }
     };
 
-    juri_stream.header_end();
+    read_stream.header_end();
 
     if let Some(is_read_body_finish) = is_read_body_finish {
         let mut already_read_body_length: usize = 0;
-        if let Some(body_bytes) = &mut newline.get_residue_bytes() {
+        if let Some(body_bytes) = &mut line.get_residue_bytes() {
             already_read_body_length = body_bytes.len();
-            juri_stream.handle_request_body_bytes(body_bytes).await;
+            read_stream.write_body(body_bytes).await?;
         }
         if !is_read_body_finish {
             loop {
@@ -84,12 +87,12 @@ pub async fn handle_bytes(
                     break;
                 }
                 let body_bytes = &mut buffer[..bytes_count].to_vec();
-                juri_stream.handle_request_body_bytes(body_bytes).await;
+                read_stream.write_body(body_bytes).await?;
                 if bytes_count < BUFFER_SIZE {
                     break;
                 }
             }
-        } else if let Some(content_length) = juri_stream.header_map.get("Content-Length") {
+        } else if let Some(content_length) = read_stream.header_map.get("Content-Length") {
             // 处理读取 header 时，读取数据大小小于缓冲区大小，但是 header 已经读取完毕
             if let Ok(content_length) = content_length.parse::<usize>() {
                 if content_length != 0 && content_length > already_read_body_length {
@@ -100,7 +103,7 @@ pub async fn handle_bytes(
                         }
 
                         let body_bytes = &mut buffer[..bytes_count].to_vec();
-                        juri_stream.handle_request_body_bytes(body_bytes).await;
+                        read_stream.write_body(body_bytes).await?;
 
                         if bytes_count < BUFFER_SIZE {
                             break;
@@ -111,5 +114,5 @@ pub async fn handle_bytes(
         }
     }
 
-    juri_stream.get_request()
+    read_stream.get_request()
 }

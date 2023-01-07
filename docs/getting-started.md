@@ -24,11 +24,12 @@ cargo:
 
 ```shell
 cargo add juri 
+cargo add async-std
 ```
 
 或者
 
-在 Cargo.toml 文件里添加 `juri = "0.4.0-alpha.1"`
+在 Cargo.toml 文件里添加 `juri = "0.4.0-alpha.2"`
 
 ## 使用
 
@@ -40,7 +41,7 @@ use std::net::SocketAddr;
 
 #[handler]
 fn handle_index(_request: &Request) -> juri::Result<Response> {
-    Ok(Response::html_str("Hello Juri"))
+    Ok(Response::html("Hello Juri"))
 }
 
 #[juri::main]

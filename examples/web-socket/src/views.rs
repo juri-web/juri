@@ -1,6 +1,6 @@
 use juri::{
     get,
-    web_socket::{Message, RequestExt, WSResponse},
+    web_socket::{Message, WSRequestExt, WSResponse},
     Response,
 };
 use std::fs;
@@ -34,5 +34,5 @@ pub fn handle_ws(request: &juri::Request) -> juri::Result<WSResponse> {
 #[get("/")]
 pub fn handle_index(_request: &juri::Request) -> juri::Result<Response> {
     let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/index.html")).unwrap();
-    Ok(Response::html_str(&content))
+    Ok(Response::html(&content))
 }

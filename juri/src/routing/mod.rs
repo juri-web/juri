@@ -57,7 +57,7 @@ mod test {
 
     #[handler(internal)]
     pub async fn handle_index_at(_request: &Request) -> crate::Result<Response> {
-        Ok(Response::html_str("Hello Juri"))
+        Ok(Response::html("Hello Juri"))
     }
 
     #[test]

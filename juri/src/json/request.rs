@@ -1,13 +1,18 @@
+use crate::Request;
 use serde_json::Value;
 
-use crate::Request;
-
-pub trait RequestExt {
-    fn json_value(&self) -> serde_json::Result<Value>;
+pub trait JsonRequestExt {
+    fn json_value(&self) -> Result<Value, crate::Error>;
 }
 
-impl RequestExt for Request {
-    fn json_value(&self) -> serde_json::Result<Value> {
-        serde_json::from_slice(&self.body_bytes)
+impl JsonRequestExt for Request {
+    fn json_value(&self) -> Result<Value, crate::Error> {
+        match serde_json::from_slice(&self.body_bytes) {
+            Ok(json_value) => Ok(json_value),
+            Err(e) => Err(crate::Error {
+                code: 401,
+                reason: e.to_string(),
+            }),
+        }
     }
 }
