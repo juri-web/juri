@@ -15,9 +15,14 @@ HTTP Framework
 
 ## Getting Started
 
-Please refer to [Juri Document](https://luoxiaozero.github.io/juri)
+Please refer to [Juri Document](https://juri-web.github.io/juri)
 
 ## Example
+
+```
+cargo add juri
+cargo add async-std
+```
 
 ```rust
 use juri::{Request, Response, Router, handler};
