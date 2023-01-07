@@ -36,6 +36,6 @@ pub fn handle_ws(&request: Request) -> juri::Result<WSResponse> {
     Ok(ws)
 
     /// 也可以自定义返回
-    // Ok(WSResponse::new(Response::html_str("")))
+    // Ok(WSResponse::new(Response::html("")))
 }
 ```

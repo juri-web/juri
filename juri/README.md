@@ -19,7 +19,7 @@ use std::net::SocketAddr;
 
 #[handler]
 fn handle_index(_request: &Request) -> juri::Result<Response> {
-    Ok(Response::html_str("Hello Juri"))
+    Ok(Response::html("Hello Juri"))
 }
 
 #[juri::main]
