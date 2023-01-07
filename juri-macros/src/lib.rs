@@ -23,6 +23,7 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
     let path = args[0].to_token_stream();
     let mut string = path.to_string();
     string = string[1..string.len() - 1].to_string();
+    let crate_name = utils::get_crate_name(internal);
 
     match syn::parse::<ItemFn>(item) {
         Ok(item_fn) => {
@@ -35,10 +36,10 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
             };
             let expanded = if ws {
                 quote! {
-                    #vis fn #ident() -> juri::RouteOrWSRoute {
+                    #vis fn #ident() -> #crate_name::RouteOrWSRoute {
                         #def_struct
 
-                        juri::RouteOrWSRoute::WS(juri::WSRoute {
+                        #crate_name::RouteOrWSRoute::WS(#crate_name::WSRoute {
                             path: #string.to_string(),
                             handler: std::sync::Arc::new(#ident)
                         })
@@ -46,11 +47,11 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
             } else {
                 quote! {
-                    #vis fn #ident() -> juri::RouteOrWSRoute {
+                    #vis fn #ident() -> #crate_name::RouteOrWSRoute {
                         #def_struct
 
-                        juri::RouteOrWSRoute::COMMON(juri::Route {
-                            method: juri::HTTPMethod::GET,
+                        #crate_name::RouteOrWSRoute::COMMON(#crate_name::Route {
+                            method: #crate_name::HTTPMethod::GET,
                             path: #string.to_string(),
                             handler: std::sync::Arc::new(#ident)
                         })
@@ -77,6 +78,7 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
     let path = args[0].to_token_stream();
     let mut string = path.to_string();
     string = string[1..string.len() - 1].to_string();
+    let crate_name = utils::get_crate_name(internal);
 
     match syn::parse::<ItemFn>(item) {
         Ok(item_fn) => {
@@ -84,11 +86,11 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
             let ident = item_fn.sig.ident.clone();
             let def_struct = generate_struct(internal, item_fn);
             let expanded = quote! {
-                #vis fn #ident() -> juri::RouteOrWSRoute {
+                #vis fn #ident() -> #crate_name::RouteOrWSRoute {
                     #def_struct
 
-                    juri::RouteOrWSRoute::COMMON(juri::Route {
-                        method: juri::HTTPMethod::POST,
+                    #crate_name::RouteOrWSRoute::COMMON(#crate_name::Route {
+                        method: #crate_name::HTTPMethod::POST,
                         path: #string.to_string(),
                         handler: std::sync::Arc::new(#ident)
                     })
