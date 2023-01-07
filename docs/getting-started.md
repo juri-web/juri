@@ -29,7 +29,7 @@ cargo add async-std
 
 或者
 
-在 Cargo.toml 文件里添加 `juri = "0.4.0-alpha.1"`
+在 Cargo.toml 文件里添加 `juri = "0.4.0-alpha.2"`
 
 ## 使用
 
