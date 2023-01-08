@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::match_route_params;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MatchRoute {
     pub path: String,
     pub params: Vec<String>,
@@ -54,23 +54,22 @@ impl MatchRoute {
     }
 }
 
-// #[test]
-// fn test_conversion_route_the_path() {
-//     use crate::{request::HTTPMethod, Request, Response};
+#[cfg(test)]
+mod test {
+    use super::MatchRoute;
 
-//     fn handle_index(_request: &Request) -> crate::Result<Response> {
-//         Ok(Response::html_str("Hello Juri"))
-//     }
+    #[test]
+    fn test_match_route() {
+        let match_route = MatchRoute::new(String::from("/aa"), String::from(""));
+        assert_eq!(match_route.path, String::from("^/aa$"));
 
-//     let match_route = conversion_route(&(HTTPMethod::GET, "/aa".to_string(), handle_index));
-//     assert_eq!(match_route.path, "^/aa$");
+        let match_route = MatchRoute::new(String::from("/aa/:bb"), String::from(""));
+        assert_eq!(match_route.path, String::from("^/aa/([^/]*?)$"));
 
-//     let match_route = conversion_route(&(HTTPMethod::GET, "/aa/:bb".to_string(), handle_index));
-//     assert_eq!(match_route.path, "^/aa/([^/]*?)$");
+        let match_route = MatchRoute::new(String::from("/aa/:bb/cc"), String::from(""));
+        assert_eq!(match_route.path, String::from("^/aa/([^/]*?)/cc$"));
 
-//     let match_route = conversion_route(&(HTTPMethod::GET, "/aa/:bb/cc".to_string(), handle_index));
-//     assert_eq!(match_route.path, "^/aa/([^/]*?)/cc$");
-
-//     let match_route = conversion_route(&(HTTPMethod::GET, "/aa/:bb+".to_string(), handle_index));
-//     assert_eq!(match_route.path, "^/aa/(.+)$");
-// }
+        let match_route = MatchRoute::new(String::from("/aa/:bb+"), String::from(""));
+        assert_eq!(match_route.path, String::from("^/aa/(.+)$"));
+    }
+}
