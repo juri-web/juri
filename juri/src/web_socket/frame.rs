@@ -173,7 +173,7 @@ impl FrameHeader {
             header_bytes.append(&mut bytes);
         } else {
             header_bytes.push(0x7f);
-            let mut bytes = (payload_length as u64).to_le_bytes().to_vec();
+            let mut bytes = payload_length.to_le_bytes().to_vec();
             header_bytes.append(&mut bytes);
         }
 

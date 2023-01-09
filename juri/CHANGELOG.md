@@ -1,3 +1,15 @@
+## 0.4.0-alpha.3 (2022-01-09)
+
+### Features
+
+add ci
+
+### Bug Fixes
+
+header: key lowercase
+
+router: nested routing path error
+
 ## 0.4.0-alpha.2 (2022-01-07)
 
 ### Bug Fixes
