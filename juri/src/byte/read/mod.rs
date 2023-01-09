@@ -43,7 +43,7 @@ pub async fn read_request(
 
     // Body: None 读取完成, True 可能读取完成, False 未完成
     let is_read_body_finish = loop {
-        let (bytes_count, mut buffer) = read_buffer(stream, &config).await?;
+        let (bytes_count, mut buffer) = read_buffer(stream, config).await?;
 
         if bytes_count == 0 {
             break None;
@@ -82,7 +82,7 @@ pub async fn read_request(
         }
         if !is_read_body_finish {
             loop {
-                let (bytes_count, buffer) = read_buffer(stream, &config).await?;
+                let (bytes_count, buffer) = read_buffer(stream, config).await?;
                 if bytes_count == 0 {
                     break;
                 }
@@ -97,7 +97,7 @@ pub async fn read_request(
             if let Ok(content_length) = content_length.parse::<usize>() {
                 if content_length != 0 && content_length > already_read_body_length {
                     loop {
-                        let (bytes_count, buffer) = read_buffer(stream, &config).await?;
+                        let (bytes_count, buffer) = read_buffer(stream, config).await?;
                         if bytes_count == 0 {
                             break;
                         }

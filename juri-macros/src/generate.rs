@@ -29,7 +29,7 @@ pub fn generate_struct(internal: bool, item_fn: ItemFn) -> TokenStream {
             }
         }
     };
-    expanded.into()
+    expanded
 }
 
 
@@ -59,5 +59,5 @@ pub fn generate_ws_struct(internal: bool, item_fn: ItemFn) -> TokenStream {
             }
         }
     };
-    expanded.into()
+    expanded
 }

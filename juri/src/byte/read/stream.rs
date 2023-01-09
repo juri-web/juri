@@ -74,12 +74,11 @@ impl ReadStream {
 
     pub fn write_header(&mut self, header_bytes: Vec<u8>) -> Result<(), crate::Error> {
         let header = String::from_utf8(header_bytes).unwrap();
-        if let None = self.request_line {
+        if self.request_line.is_none() {
             self.request_line = Some(get_request_line(header));
         } else {
             let (key, value) = get_header(header)?;
-            self.header_map
-                .insert(key.to_lowercase(), value);
+            self.header_map.insert(key.to_lowercase(), value);
         }
         Ok(())
     }
@@ -99,13 +98,13 @@ impl ReadStream {
 
     pub fn get_request(self) -> Result<Request, crate::Error> {
         let mut request = Request::default();
-        let request_line = self.request_line.map_or(
-            Err(crate::Error {
+        let Some(request_line) = self.request_line else {
+            return Err(crate::Error {
                 code: 400,
                 reason: "请求方法错误".to_string(),
-            }),
-            |v| Ok(v),
-        )?;
+            });
+        };
+ 
         request.method = HTTPMethod::from(request_line.0)?;
         request.set_full_path(request_line.1);
         request.protocol_and_version = request_line.2;
@@ -125,7 +124,7 @@ impl ReadStream {
     pub fn is_multipart_form_data(&mut self) -> bool {
         if let Some(content_type) = self.header_map.get("Content-Type") {
             let re = Regex::new(r"^multipart/form-data; boundary=(.*?)$").unwrap();
-            if let Some(caps) = re.captures(&content_type) {
+            if let Some(caps) = re.captures(content_type) {
                 if let Some(boundary) = caps.get(1).map(|m| m.as_str()) {
                     self.multipart_form_data = Some(MultipartFormData {
                         boundary: boundary.to_string(),

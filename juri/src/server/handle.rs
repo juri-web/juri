@@ -46,7 +46,7 @@ pub async fn handle_request(
                 let mut response = match plugin_response {
                     Some(response) => response,
                     None => match router.match_handler(&mut request) {
-                        MatchRouteHandler::COMMON(handler) => {
+                        MatchRouteHandler::Common(handler) => {
                             let response = handler.call(&request).await;
                             match response {
                                 Ok(response) => response,

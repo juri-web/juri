@@ -21,15 +21,14 @@ impl WSRequestExt for Request {
             })?;
         }
 
-        if self.header("Connection") == Some("Upgrade".to_string()) {
-            if self.header("Upgrade") == Some("websocket".to_string()) {
-                if self.header("Sec-WebSocket-Version") == Some("13".to_string()) {
-                    if self.header("Sec-WebSocket-Key") != None {
-                        return Ok(WSResponse::success(self.header_map.clone()));
-                    }
-                }
-            }
+        if self.header("Connection") == Some("Upgrade".to_string())
+            && self.header("Upgrade") == Some("websocket".to_string())
+            && self.header("Sec-WebSocket-Version") == Some("13".to_string())
+            && self.header("Sec-WebSocket-Key").is_some()
+        {
+            return Ok(WSResponse::success(self.header_map.clone()));
         }
+
         Err(crate::Error {
             code: 406,
             reason: "Not Acceptable".to_owned(),

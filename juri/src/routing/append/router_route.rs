@@ -7,7 +7,7 @@ pub struct RouterRoute<'a> {
 impl<'a> RouterRoute<'a> {
     pub fn route(&mut self, route: RouteOrWSRoute) -> &mut Self {
         match route {
-            RouteOrWSRoute::COMMON(route) => match route.method {
+            RouteOrWSRoute::Common(route) => match route.method {
                 HTTPMethod::GET => {
                     let handler_id = format!("GET{}", route.path);
                     self.router.get.insert(route.path, handler_id.clone());

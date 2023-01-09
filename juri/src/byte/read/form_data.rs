@@ -92,7 +92,7 @@ impl MultipartFormData {
                     point_index = index + 1;
                     break;
                 } else if let Some(temp_form_data) = self.temp_form_data.as_mut() {
-                    if bytes.len() == 0 && temp_form_data.cache_file_name.is_empty() {
+                    if bytes.is_empty() && temp_form_data.cache_file_name.is_empty() {
                         let mut s = DefaultHasher::new();
                         temp_form_data.hash(&mut s);
                         temp_form_data.cache_file_name = s.finish().to_string();
@@ -100,7 +100,7 @@ impl MultipartFormData {
                         let header = String::from_utf8(bytes).unwrap();
                         let (key, value) = get_header(header)?;
                         if key == "Content-Disposition" {
-                            let mut str_split = value.split(";");
+                            let mut str_split = value.split(';');
                             str_split.next();
                             if let Some(name) = str_split.next() {
                                 let (key, value) = FormData::get_header(name.trim())?;
@@ -184,7 +184,7 @@ fn is_vec_equals<T: std::cmp::PartialEq>(vec1: &Vec<T>, vec2: &Vec<T>) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 #[derive(Hash, Clone)]
@@ -223,7 +223,7 @@ impl FormData {
     pub fn file_type(&self) -> Option<String> {
         if let Some(file_name) = &self.file_name {
             let re = Regex::new(r"\.(.*?)$").unwrap();
-            let caps = re.captures(&file_name);
+            let caps = re.captures(file_name);
             if let Some(caps) = caps {
                 if let Some(value) = caps.get(1) {
                     return Some(value.as_str().to_string());
@@ -235,7 +235,7 @@ impl FormData {
 
     fn get_header(header: &str) -> Result<(String, String), crate::Error> {
         let re = Regex::new("^(.+)=\"(.+)\"$").unwrap();
-        let caps = re.captures(&header).ok_or(crate::Error {
+        let caps = re.captures(header).ok_or(crate::Error {
             code: 500,
             reason: "header parse failure".to_string(),
         })?;
