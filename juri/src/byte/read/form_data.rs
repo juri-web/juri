@@ -98,18 +98,18 @@ impl MultipartFormData {
                         temp_form_data.cache_file_name = s.finish().to_string();
                     } else if temp_form_data.cache_file_name.is_empty() {
                         let header = String::from_utf8(bytes).unwrap();
-                        let (key, value) = get_header(header);
+                        let (key, value) = get_header(header)?;
                         if key == "Content-Disposition" {
                             let mut str_split = value.split(";");
                             str_split.next();
                             if let Some(name) = str_split.next() {
-                                let (key, value) = FormData::get_header(name.trim());
+                                let (key, value) = FormData::get_header(name.trim())?;
                                 if key == "name" {
                                     temp_form_data.name = value.trim().to_string();
                                 }
                             }
                             if let Some(file_name) = str_split.next() {
-                                let (key, value) = FormData::get_header(file_name.trim());
+                                let (key, value) = FormData::get_header(file_name.trim())?;
                                 if key == "filename" {
                                     temp_form_data.file_name = Some(value.trim().to_string());
                                 }
@@ -233,15 +233,41 @@ impl FormData {
         None
     }
 
-    fn get_header(header: &str) -> (String, String) {
-        let re = Regex::new("^(.*?)=\"(.*?)\"$").unwrap();
-        let caps = re.captures(&header).unwrap();
+    fn get_header(header: &str) -> Result<(String, String), crate::Error> {
+        let re = Regex::new("^(.+)=\"(.+)\"$").unwrap();
+        let caps = re.captures(&header).ok_or(crate::Error {
+            code: 500,
+            reason: "header parse failure".to_string(),
+        })?;
         let key = caps
             .get(1)
-            .map_or("".to_string(), |m| m.as_str().trim().to_string());
+            .ok_or(crate::Error {
+                code: 500,
+                reason: "header key parse failure".to_string(),
+            })?
+            .as_str()
+            .to_string();
         let value = caps
             .get(2)
-            .map_or("".to_string(), |m| m.as_str().trim().to_string());
-        (key, value)
+            .ok_or(crate::Error {
+                code: 500,
+                reason: "header value parse failure".to_string(),
+            })?
+            .as_str()
+            .to_string();
+        Ok((key, value))
+    }
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::FormData;
+
+    #[test]
+    fn test_get_header() {
+        let (key, value) = FormData::get_header("Context-Type=\"hi\"").unwrap();
+        assert_eq!(key, "Context-Type".to_string());
+        assert_eq!(value, "hi".to_string());
     }
 }

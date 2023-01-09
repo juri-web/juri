@@ -60,7 +60,7 @@ pub async fn read_request(
                 break true;
             }
 
-            read_stream.write_header(header_bytes);
+            read_stream.write_header(header_bytes)?;
         };
 
         if is_exist_body {

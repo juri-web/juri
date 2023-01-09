@@ -18,22 +18,24 @@ pub struct Request {
     pub(crate) multipart_form_data: Vec<FormData>,
 }
 
-impl Request {
-    pub fn new() -> Self {
-        Request {
+impl Default for Request {
+    fn default() -> Self {
+        Self {
             method: HTTPMethod::GET,
-            full_path: "".to_string(),
-            protocol_and_version: "".to_string(),
-            path: "".to_string(),
-            header_map: HashMap::new(),
-            params_map: HashMap::new(),
-            query_str: "".to_string(),
-            hash: "".to_string(),
-            body_bytes: Vec::<u8>::new(),
-            multipart_form_data: vec![],
+            full_path: Default::default(),
+            protocol_and_version: Default::default(),
+            path: Default::default(),
+            header_map: Default::default(),
+            params_map: Default::default(),
+            query_str: Default::default(),
+            hash: Default::default(),
+            body_bytes: Default::default(),
+            multipart_form_data: Default::default(),
         }
     }
+}
 
+impl Request {
     pub fn set_full_path(&mut self, full_path: String) {
         self.full_path = full_path;
         let (path, query_str, hash) = handle_full_path(self.full_path.clone());
@@ -74,7 +76,7 @@ impl Request {
             return None;
         }
 
-        if let Some(value) = self.header_map.get(key) {
+        if let Some(value) = self.header_map.get(&key.to_lowercase()) {
             return Some(value.to_string());
         }
 
@@ -126,4 +128,20 @@ fn handle_full_path(full_path: String) -> (String, String, String) {
         .get(3)
         .map_or("".to_string(), |m| m.as_str().to_string());
     (path, query_str, hash)
+}
+
+#[cfg(test)]
+mod test {
+    use crate::Request;
+
+    #[test]
+    fn header() {
+        let mut request = Request::default();
+        request
+            .header_map
+            .insert("Context-Type".to_string().to_lowercase(), "hi".to_string());
+        assert_eq!(request.header("context-type"), Some("hi".to_string()));
+        assert_eq!(request.header("Context-type"), Some("hi".to_string()));
+        assert_eq!(request.header("Context-Type"), Some("hi".to_string()));
+    }
 }
