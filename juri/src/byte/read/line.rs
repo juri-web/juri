@@ -50,7 +50,7 @@ impl Iterator for Line {
                 }
 
                 if flag_n && flag_r {
-                    let bytes: Vec<u8> = self.bytes.drain(..(index - 1)).collect();
+                    let bytes: Vec<u8> = self.bytes.drain(..(self._marker + index - 1)).collect();
                     self.bytes.drain(..2);
                     self._marker = 0;
                     break Some(bytes);

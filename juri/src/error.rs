@@ -8,32 +8,6 @@ pub struct Error {
     pub reason: String,
 }
 
-/// # Examples
-///```
-/// use juri::{Request, Response, ResponseAndError};
-/// use std::collections::HashMap;
-///
-/// fn get_super_error(flag: bool) -> juri::Result<()> {
-///     if flag {
-///         Err(ResponseAndError::Response(Response {
-///             status_code: 200,
-///             contents: "".to_string(),
-///             headers: HashMap::new(),
-///         }))
-///     } else {
-///         Err(ResponseAndError::Error(juri::Error {
-///             code: 1,
-///             reason: "".to_string(),
-///         }))
-///     }
-/// }
-///
-/// fn main() -> juri::Result<()> {
-///     let temp = get_super_error(true)?;
-///     let temp = get_super_error(false)?;
-///     Ok(temp)
-/// }
-///```
 #[derive(Debug)]
 pub enum ResponseAndError {
     Error(Error),
