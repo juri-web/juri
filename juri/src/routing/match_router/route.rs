@@ -27,15 +27,13 @@ impl MatchRoute {
                 } else if let Some(index) = path.find('/') {
                     path_params.push(path[..index].to_string());
                     path_re.push_str(format!("{}{}", r"/([^/]*?)", &path[index..]).as_str());
+                } else if path.ends_with('+') {
+                    path_params.push(path.to_string());
+                    path_re.push_str(r"/(.+)");
+                    break;
                 } else {
-                    if path.ends_with("+") {
-                        path_params.push(path[..path.len() - 1].to_string());
-                        path_re.push_str(r"/(.+)");
-                        break;
-                    } else {
-                        path_params.push(path.to_string());
-                        path_re.push_str(r"/([^/]*?)");
-                    }
+                    path_params.push(path.to_string());
+                    path_re.push_str(r"/([^/]*?)");
                 }
             }
             Self {

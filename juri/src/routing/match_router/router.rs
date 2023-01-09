@@ -31,10 +31,7 @@ impl MatchRouter {
                 .get
                 .iter()
                 .map(|route| {
-                    MatchRoute::new(
-                        format!("{}{}", root, route.0.clone()),
-                        route.1.clone(),
-                    )
+                    MatchRoute::new(format!("{}{}", root, route.0.clone()), route.1.clone())
                 })
                 .collect(),
         );
@@ -43,10 +40,7 @@ impl MatchRouter {
                 .post
                 .iter()
                 .map(|route| {
-                    MatchRoute::new(
-                        format!("{}{}", root, route.0.clone()),
-                        route.1.clone(),
-                    )
+                    MatchRoute::new(format!("{}{}", root, route.0.clone()), route.1.clone())
                 })
                 .collect(),
         );
@@ -82,7 +76,7 @@ impl MatchRouter {
 }
 
 pub enum MatchRouteHandler {
-    COMMON(Arc<dyn HTTPHandler>),
+    Common(Arc<dyn HTTPHandler>),
     WS(Arc<dyn WSHandler>),
     None,
 }
@@ -95,7 +89,7 @@ impl MatchRouter {
                     if let Some(map) = route.match_params(request.path.clone()) {
                         request.params_map = map;
                         return match self.handler.get(&route.handler) {
-                            Some(handler) => MatchRouteHandler::COMMON(handler.clone()),
+                            Some(handler) => MatchRouteHandler::Common(handler.clone()),
                             None => match self.ws_handler.get(&route.handler) {
                                 Some(handler) => MatchRouteHandler::WS(handler.clone()),
                                 None => MatchRouteHandler::None,
@@ -109,7 +103,7 @@ impl MatchRouter {
                     if let Some(map) = route.match_params(request.path.clone()) {
                         request.params_map = map;
                         return match self.handler.get(&route.handler) {
-                            Some(handler) => MatchRouteHandler::COMMON(handler.clone()),
+                            Some(handler) => MatchRouteHandler::Common(handler.clone()),
                             None => MatchRouteHandler::None,
                         };
                     }
@@ -123,8 +117,8 @@ impl MatchRouter {
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
     use super::MatchRouter;
+    use crate::prelude::*;
 
     #[get("/hi", internal)]
     fn hi(_request: &Request) -> crate::Result<Response> {
@@ -132,14 +126,14 @@ mod test {
     }
 
     fn child_child_router() -> Router {
-        let mut router = Router::new();
+        let mut router = Router::default();
         router.root("/child");
         router.route(hi());
         router
     }
 
     fn child_router() -> Router {
-        let mut router = Router::new();
+        let mut router = Router::default();
         router.root("/me");
         router.route(hi());
         router.router(child_child_router());
@@ -148,7 +142,7 @@ mod test {
 
     #[test]
     fn test_match_router() {
-        let mut router = Router::new();
+        let mut router = Router::default();
         router.root("/my");
         router.route(hi());
         router.router(child_router());

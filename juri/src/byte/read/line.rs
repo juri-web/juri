@@ -1,6 +1,5 @@
 use std::{iter::Iterator, vec};
 
-
 pub struct Line {
     bytes: Vec<u8>,
     _marker: usize,
@@ -51,7 +50,7 @@ impl Iterator for Line {
                 }
 
                 if flag_n && flag_r {
-                    let bytes: Vec<u8> = self.bytes.drain(..(index - 1)).collect();
+                    let bytes: Vec<u8> = self.bytes.drain(..(self._marker + index - 1)).collect();
                     self.bytes.drain(..2);
                     self._marker = 0;
                     break Some(bytes);
@@ -60,7 +59,7 @@ impl Iterator for Line {
                 self._marker = self.bytes.len();
                 if self.bytes.last() == Some(&13) {
                     self._marker -= 1;
-                } 
+                }
                 break None;
             }
         }
@@ -110,5 +109,4 @@ fn test_newline() {
     let mut line = Line::new();
     let mut bytes: Vec<u8> = vec![1, 2, 13, 10];
     line.push(&mut bytes);
-
 }

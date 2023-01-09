@@ -3,10 +3,10 @@ mod match_router;
 mod route;
 
 use append::{AtPath, RouterRoute};
-pub use match_router::{MatchRouteHandler, MatchRouter, match_route_params};
+pub use match_router::{match_route_params, MatchRouteHandler, MatchRouter};
 pub use route::{Route, RouteHandlerMap, RouteMap, RouteOrWSRoute, WSRoute, WSRouterHandlerMap};
-use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct Router {
     root: Option<String>,
     get: RouteMap,
@@ -18,15 +18,7 @@ pub struct Router {
 
 impl Router {
     pub fn new() -> Self {
-        Router {
-            root: None,
-            get: HashMap::new(),
-            post: HashMap::new(),
-            handler: HashMap::new(),
-            ws_handler: HashMap::new(),
-
-            router: vec![],
-        }
+        Router::default()
     }
 
     pub fn root(&mut self, root: &str) {
@@ -62,7 +54,7 @@ mod test {
 
     #[test]
     fn test_at() {
-        let mut router = Router::new();
+        let mut router = Router::default();
 
         router.at("/").get(handle_index_at).post(handle_index_at);
     }

@@ -48,16 +48,26 @@ mod test {
 
     #[test]
     fn test_success() {
-        let mut request = Request::new();
+        let mut request = Request::default();
 
         request.protocol_and_version = "HTTP/1.1".to_string();
 
-        request
-            .header_map
-            .insert("Connection".to_string(), "Upgrade".to_string());
-        request
-            .header_map
-            .insert("Upgrade".to_string(), "websocket".to_string());
+        request.header_map.insert(
+            "Connection".to_string().to_lowercase(),
+            "Upgrade".to_string(),
+        );
+        request.header_map.insert(
+            "Upgrade".to_string().to_lowercase(),
+            "websocket".to_string(),
+        );
+        request.header_map.insert(
+            "Sec-WebSocket-Version".to_string().to_lowercase(),
+            "13".to_string(),
+        );
+        request.header_map.insert(
+            "Sec-WebSocket-Key".to_string().to_lowercase(),
+            "-----".to_string(),
+        );
 
         let _ws_response = test_handle_success(&request).unwrap();
     }

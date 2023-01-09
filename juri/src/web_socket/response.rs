@@ -64,7 +64,7 @@ impl WSResponse {
 
         let sec_websocket_accept = WSResponse::get_sec_websocket_accept(
             self.request_header_map
-                .get("Sec-WebSocket-Key")
+                .get(&"Sec-WebSocket-Key".to_lowercase())
                 .unwrap()
                 .to_string(),
         );

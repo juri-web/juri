@@ -1,6 +1,5 @@
-use std::path::PathBuf;
 use juri::{handler, Request, Response};
-use std::fs;
+use std::{fs, path::PathBuf};
 
 pub static TEMPLATE_PATH: &str = "./basic/template";
 

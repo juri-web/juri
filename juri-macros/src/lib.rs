@@ -50,7 +50,7 @@ pub fn get(attr: TokenStream, item: TokenStream) -> TokenStream {
                     #vis fn #ident() -> #crate_name::RouteOrWSRoute {
                         #def_struct
 
-                        #crate_name::RouteOrWSRoute::COMMON(#crate_name::Route {
+                        #crate_name::RouteOrWSRoute::Common(#crate_name::Route {
                             method: #crate_name::HTTPMethod::GET,
                             path: #string.to_string(),
                             handler: std::sync::Arc::new(#ident)
@@ -89,7 +89,7 @@ pub fn post(attr: TokenStream, item: TokenStream) -> TokenStream {
                 #vis fn #ident() -> #crate_name::RouteOrWSRoute {
                     #def_struct
 
-                    #crate_name::RouteOrWSRoute::COMMON(#crate_name::Route {
+                    #crate_name::RouteOrWSRoute::Common(#crate_name::Route {
                         method: #crate_name::HTTPMethod::POST,
                         path: #string.to_string(),
                         handler: std::sync::Arc::new(#ident)

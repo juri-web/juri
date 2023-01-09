@@ -24,7 +24,6 @@ pub fn match_route_params(
     None
 }
 
-
 #[test]
 fn test_match_route_params() {
     let params_map = match_route_params("^/aa$".to_string(), vec![], "/aa".to_string());

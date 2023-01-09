@@ -36,7 +36,7 @@ impl JsonResponseExt for Response {
 fn main() {
     let response = Response::json("one").unwrap();
     if let ResponseBody::Text(text) = response.body {
-        let one = String::from("one");
+        let one = String::from("\"one\"");
         assert_eq!(text, one);
     }
 }
