@@ -1,0 +1,15 @@
+name: ci
+
+on:
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    deploy:
+        runs-on: ubuntu-20.04
+        steps:
+            - uses: actions/checkout@v3
+            - uses: icepuma/rust-action@master
+              with:
+                  args: cargo fmt -- --check && cargo clippy -- -Dwarnings && cargo test
