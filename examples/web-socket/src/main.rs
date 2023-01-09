@@ -1,4 +1,4 @@
-use juri::{Router, plugin::StaticFilePlugin};
+use juri::{plugin::StaticFilePlugin, Router};
 use std::{collections::HashMap, env, net::SocketAddr};
 mod views;
 

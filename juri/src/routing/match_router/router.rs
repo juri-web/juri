@@ -31,10 +31,7 @@ impl MatchRouter {
                 .get
                 .iter()
                 .map(|route| {
-                    MatchRoute::new(
-                        format!("{}{}", root, route.0.clone()),
-                        route.1.clone(),
-                    )
+                    MatchRoute::new(format!("{}{}", root, route.0.clone()), route.1.clone())
                 })
                 .collect(),
         );
@@ -43,10 +40,7 @@ impl MatchRouter {
                 .post
                 .iter()
                 .map(|route| {
-                    MatchRoute::new(
-                        format!("{}{}", root, route.0.clone()),
-                        route.1.clone(),
-                    )
+                    MatchRoute::new(format!("{}{}", root, route.0.clone()), route.1.clone())
                 })
                 .collect(),
         );
@@ -123,8 +117,8 @@ impl MatchRouter {
 
 #[cfg(test)]
 mod test {
-    use crate::prelude::*;
     use super::MatchRouter;
+    use crate::prelude::*;
 
     #[get("/hi", internal)]
     fn hi(_request: &Request) -> crate::Result<Response> {

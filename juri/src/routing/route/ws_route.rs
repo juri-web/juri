@@ -1,6 +1,5 @@
 use crate::web_socket::WSHandler;
-use std::{sync::Arc, collections::HashMap};
-
+use std::{collections::HashMap, sync::Arc};
 
 #[derive(Clone)]
 pub struct WSRoute {

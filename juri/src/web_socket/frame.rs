@@ -1,6 +1,9 @@
 use async_std::{io::ReadExt, net::TcpStream};
 use byteorder::{NetworkEndian, ReadBytesExt};
-use std::{io::{Cursor, Read}, time::Duration};
+use std::{
+    io::{Cursor, Read},
+    time::Duration,
+};
 
 use super::WSConfig;
 
@@ -235,12 +238,18 @@ impl Frame {
 }
 
 impl Frame {
-    pub async fn read_frame(stream: &mut TcpStream, config: &WSConfig) -> std::result::Result<Frame, crate::Error> {
+    pub async fn read_frame(
+        stream: &mut TcpStream,
+        config: &WSConfig,
+    ) -> std::result::Result<Frame, crate::Error> {
         let frame_bytes = Frame::read_stream(stream, config).await?;
         Frame::parse(frame_bytes).await
     }
 
-    async fn read_stream(stream: &mut TcpStream, config: &WSConfig) -> std::result::Result<Vec<u8>, crate::Error> {
+    async fn read_stream(
+        stream: &mut TcpStream,
+        config: &WSConfig,
+    ) -> std::result::Result<Vec<u8>, crate::Error> {
         let mut frame_bytes = vec![];
         loop {
             let mut buffer = vec![0u8; BUFFER_SIZE];
@@ -299,7 +308,6 @@ impl Frame {
         }
     }
 }
-
 
 #[test]
 fn test() {

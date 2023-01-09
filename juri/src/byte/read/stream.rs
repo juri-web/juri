@@ -104,7 +104,7 @@ impl ReadStream {
                 reason: "请求方法错误".to_string(),
             });
         };
- 
+
         request.method = HTTPMethod::from(request_line.0)?;
         request.set_full_path(request_line.1);
         request.protocol_and_version = request_line.2;

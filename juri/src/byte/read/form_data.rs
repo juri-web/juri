@@ -259,7 +259,6 @@ impl FormData {
     }
 }
 
-
 #[cfg(test)]
 mod test {
     use super::FormData;
