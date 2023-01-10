@@ -93,6 +93,7 @@ impl Request {
                 }
             }
         }
+        None
     }
 
     pub fn file(&self, name: &str) -> Option<FormData> {
