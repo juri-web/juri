@@ -83,6 +83,18 @@ impl Request {
         None
     }
 
+    pub fn cookie(&self, key: &str) -> Option<String> {
+        if let Some(cookie) = self.header("Cookie") {
+            let re = Regex::new(&format!(r"(\;|^)\s*{}=(.*?)\s*(\;|$)", key)).unwrap();
+            let caps = re.captures(&cookie);
+            if let Some(caps) = caps {
+                if let Some(value) = caps.get(2) {
+                    return Some(value.as_str().to_string());
+                }
+            }
+        }
+    }
+
     pub fn file(&self, name: &str) -> Option<FormData> {
         for form_data in self.multipart_form_data.iter() {
             if form_data.name == name {
