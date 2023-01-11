@@ -2,6 +2,7 @@ mod byte;
 mod cache;
 mod config;
 mod error;
+mod http;
 pub mod json;
 pub mod plugin;
 pub mod prelude;
