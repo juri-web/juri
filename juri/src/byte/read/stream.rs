@@ -1,5 +1,5 @@
 use super::form_data::MultipartFormData;
-use crate::{request::HTTPMethod, Request};
+use crate::{HTTPMethod, Request};
 use regex::Regex;
 use std::collections::HashMap;
 

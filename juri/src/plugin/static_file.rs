@@ -1,6 +1,4 @@
-use crate::{
-    plugin::JuriPlugin, request::HTTPMethod, routing::match_route_params, Request, Response,
-};
+use crate::{plugin::JuriPlugin, routing::match_route_params, HTTPMethod, Request, Response};
 use std::{collections::HashMap, path::PathBuf};
 
 pub struct StaticFilePlugin {

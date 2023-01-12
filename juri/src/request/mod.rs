@@ -1,8 +1,7 @@
 use crate::byte::FormData;
+use crate::HTTPMethod;
 use regex::Regex;
 use std::collections::HashMap;
-mod http_method;
-pub use http_method::HTTPMethod;
 
 #[derive(Clone)]
 pub struct Request {

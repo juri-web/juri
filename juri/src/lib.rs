@@ -14,7 +14,8 @@ pub mod web_socket;
 
 pub use config::Config;
 pub use error::{Error, ResponseAndError, Result};
-pub use request::{HTTPMethod, Request};
+pub use http::HTTPMethod;
+pub use request::Request;
 pub use response::{HTTPHandler, Response, ResponseBody};
 pub use routing::{Route, RouteOrWSRoute, Router, WSRoute};
 pub use server::Server;

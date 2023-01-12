@@ -13,7 +13,7 @@ impl HTTPMethod {
             "POST" => HTTPMethod::POST,
             _ => Err(crate::Error {
                 code: 405,
-                reason: "Method Not Allowed".to_string(),
+                reason: "HTTPMethod Not Allowed".to_string(),
             })?,
         };
         Ok(method)

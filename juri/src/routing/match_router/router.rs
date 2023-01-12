@@ -2,7 +2,7 @@ use super::{
     super::{RouteHandlerMap, WSRouterHandlerMap},
     route::MatchRoute,
 };
-use crate::{request::HTTPMethod, response::HTTPHandler, web_socket::WSHandler, Request, Router};
+use crate::{response::HTTPHandler, web_socket::WSHandler, HTTPMethod, Request, Router};
 use std::{cmp::Ordering, sync::Arc};
 
 #[derive(Default)]
