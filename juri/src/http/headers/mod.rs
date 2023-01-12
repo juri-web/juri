@@ -5,7 +5,7 @@ pub struct HeaderValues {
 }
 
 impl HeaderValues {
-    pub fn append(&self, value: String) {
+    pub fn append(&mut self, value: String) {
         self.inner.push(value);
     }
 
@@ -38,7 +38,7 @@ impl Headers {
     }
 
     pub fn insert(&mut self, key: &str, value: &str) {
-        if let Some(values) = self.get(key) {
+        if let Some(values) = self.inner.get_mut(key) {
             values.append(value.to_string());
         } else {
             self.inner
