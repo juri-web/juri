@@ -29,13 +29,13 @@ fn generate_response_header_bytes(
 
     if let Some(request) = request {
         if request.is_keep_alive() {
-            headers.insert("Connection".into(), "keep-alive".into());
+            headers.insert("Connection", "keep-alive");
             headers.insert(
-                "Keep-Alive".into(),
-                format!("timeout={}", config.keep_alive_timeout),
+                "Keep-Alive",
+                &format!("timeout={}", config.keep_alive_timeout),
             );
         } else if response.headers.get("Connection").is_none() {
-            headers.insert("Connection".into(), "close".into());
+            headers.insert("Connection", "close");
         }
     }
 
@@ -43,18 +43,20 @@ fn generate_response_header_bytes(
         if let Some(extension) = file_path.extension() {
             if let Some(extension) = extension.to_str() {
                 if let Some(content_type) = extension_to_mime(extension) {
-                    headers.insert("Content-Type".to_string(), content_type.to_string());
+                    headers.insert("Content-Type", content_type);
                 }
             }
         }
     }
 
     if let Some(content_length) = response.get_body_bytes_len() {
-        headers.insert("Content-Length".into(), content_length.to_string());
+        headers.insert("Content-Length", &content_length.to_string());
     }
 
-    for (key, value) in headers.iter() {
-        headers_str.push_str(format!("{}: {}\r\n", key, value).as_str());
+    for (key, values) in headers.iter() {
+        for value in values.iter() {
+            headers_str.push_str(format!("{}: {}\r\n", key, value).as_str());
+        }
     }
 
     headers_str.push_str(CRLF);

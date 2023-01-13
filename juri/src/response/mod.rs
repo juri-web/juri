@@ -1,9 +1,10 @@
 mod into;
 
 pub use into::HTTPHandler;
-use std::collections::HashMap;
 use std::fs::metadata;
 use std::path::PathBuf;
+
+use crate::http::Headers;
 
 #[derive(Debug, Clone)]
 pub enum ResponseBody {
@@ -21,7 +22,7 @@ pub enum ResponseBodyByte {
 #[derive(Debug, Clone)]
 pub struct Response {
     pub status_code: u16,
-    pub headers: HashMap<String, String>,
+    pub headers: Headers,
     pub body: ResponseBody,
 }
 
@@ -63,12 +64,11 @@ impl Response {
 
 impl Response {
     pub fn html(content: &str) -> Response {
+        let mut headers = Headers::default();
+        headers.insert("Content-Type", "text/html;charset=utf-8");
         Response {
             status_code: 200,
-            headers: HashMap::from([(
-                "Content-Type".to_string(),
-                "text/html;charset=utf-8".to_string(),
-            )]),
+            headers,
             body: ResponseBody::Text(content.to_string()),
         }
     }

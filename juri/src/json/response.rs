@@ -1,6 +1,5 @@
-use crate::{Response, ResponseBody};
+use crate::{http::Headers, Response, ResponseBody};
 use serde::Serialize;
-use std::collections::HashMap;
 
 pub trait JsonResponseExt {
     fn json<T>(value: &T) -> Result<Response, crate::Error>
@@ -16,14 +15,15 @@ impl JsonResponseExt for Response {
         let json_str = serde_json::to_string(value);
 
         match json_str {
-            Ok(json_str) => Ok(Response {
-                status_code: 200,
-                headers: HashMap::from([(
-                    "Content-Type".into(),
-                    "application/json;charset=utf-8".into(),
-                )]),
-                body: ResponseBody::Text(json_str),
-            }),
+            Ok(json_str) => {
+                let mut headers = Headers::default();
+                headers.insert("Content-Type", "application/json;charset=utf-8");
+                Ok(Response {
+                    status_code: 200,
+                    headers,
+                    body: ResponseBody::Text(json_str),
+                })
+            }
             Err(e) => Err(crate::Error {
                 code: 401,
                 reason: e.to_string(),

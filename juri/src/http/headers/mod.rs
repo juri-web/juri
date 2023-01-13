@@ -1,6 +1,10 @@
-use std::{collections::HashMap, ops::Index, slice::SliceIndex};
+use std::{
+    collections::{hash_map, HashMap},
+    ops::Index,
+    slice::{Iter, SliceIndex},
+};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct HeaderValues {
     inner: Vec<String>,
 }
@@ -12,6 +16,10 @@ impl HeaderValues {
 
     pub fn last(&self) -> Option<&String> {
         self.inner.last()
+    }
+
+    pub fn iter(&self) -> Iter<'_, String> {
+        self.inner.iter()
     }
 }
 
@@ -29,7 +37,7 @@ impl From<Vec<String>> for HeaderValues {
     }
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Headers {
     inner: HashMap<String, HeaderValues>,
 }
@@ -48,6 +56,10 @@ impl Headers {
                 HeaderValues::from(vec![value.to_string()]),
             );
         }
+    }
+
+    pub fn iter(&self) -> hash_map::Iter<'_, String, HeaderValues> {
+        self.inner.iter()
     }
 }
 
