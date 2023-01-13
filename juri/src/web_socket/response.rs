@@ -1,4 +1,4 @@
-use crate::Response;
+use crate::{http::Headers, Response};
 
 use super::stream::WSStream;
 use futures_util::{future::BoxFuture, FutureExt};
@@ -9,7 +9,7 @@ type BoxWebSocketHandler =
     Box<dyn FnOnce(WSStream) -> BoxFuture<'static, ()> + Send + Sync + 'static>;
 
 pub struct WSResponse {
-    request_header_map: HashMap<String, String>,
+    request_headers: Headers,
     pub response: Response,
     pub callback: Option<BoxWebSocketHandler>,
 }
@@ -17,22 +17,22 @@ pub struct WSResponse {
 impl WSResponse {
     pub fn new(response: Response) -> Self {
         WSResponse {
-            request_header_map: HashMap::new(),
+            request_headers: Headers::default(),
             response,
             callback: None,
         }
     }
 
-    pub fn success(request_header_map: HashMap<String, String>) -> Self {
+    pub fn success(request_headers: Headers) -> Self {
         let response = Response {
             status_code: 101,
             headers: HashMap::new(),
             body: crate::ResponseBody::None,
         };
         WSResponse {
-            request_header_map,
             response,
             callback: None,
+            request_headers,
         }
     }
 
@@ -63,8 +63,10 @@ impl WSResponse {
             .insert("Upgrade".to_string(), "websocket".to_string());
 
         let sec_websocket_accept = WSResponse::get_sec_websocket_accept(
-            self.request_header_map
+            self.request_headers
                 .get(&"Sec-WebSocket-Key".to_lowercase())
+                .unwrap()
+                .last()
                 .unwrap()
                 .to_string(),
         );

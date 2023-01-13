@@ -1,4 +1,5 @@
 use crate::byte::FormData;
+use crate::http::{HeaderValues, Headers};
 use crate::HTTPMethod;
 use regex::Regex;
 use std::collections::HashMap;
@@ -9,7 +10,7 @@ pub struct Request {
     pub full_path: String,
     pub protocol_and_version: String,
     pub path: String,
-    pub(crate) header_map: HashMap<String, String>,
+    pub headers: Headers,
     pub(crate) params_map: HashMap<String, String>,
     query_str: String,
     pub hash: String,
@@ -24,7 +25,7 @@ impl Default for Request {
             full_path: Default::default(),
             protocol_and_version: Default::default(),
             path: Default::default(),
-            header_map: Default::default(),
+            headers: Default::default(),
             params_map: Default::default(),
             query_str: Default::default(),
             hash: Default::default(),
@@ -71,12 +72,12 @@ impl Request {
     }
 
     pub fn header(&self, key: &str) -> Option<String> {
-        if self.header_map.is_empty() {
-            return None;
-        }
+        Some(self.header_multi_value(key)?.last()?.clone())
+    }
 
-        if let Some(value) = self.header_map.get(&key.to_lowercase()) {
-            return Some(value.to_string());
+    pub fn header_multi_value(&self, key: &str) -> Option<HeaderValues> {
+        if let Some(values) = self.headers.get(&key.to_lowercase()) {
+            return Some(values.clone());
         }
 
         None
@@ -149,9 +150,7 @@ mod test {
     #[test]
     fn header() {
         let mut request = Request::default();
-        request
-            .header_map
-            .insert("Context-Type".to_string().to_lowercase(), "hi".to_string());
+        request.headers.insert("Context-Type", "hi");
         assert_eq!(request.header("context-type"), Some("hi".to_string()));
         assert_eq!(request.header("Context-type"), Some("hi".to_string()));
         assert_eq!(request.header("Context-Type"), Some("hi".to_string()));

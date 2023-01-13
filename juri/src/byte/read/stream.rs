@@ -1,7 +1,6 @@
 use super::form_data::MultipartFormData;
-use crate::{HTTPMethod, Request};
+use crate::{http::Headers, HTTPMethod, Request};
 use regex::Regex;
-use std::collections::HashMap;
 
 fn get_request_line(line: String) -> (String, String, String) {
     let re = Regex::new(r"^(.*?) (.*?) (.*?)$").unwrap();
@@ -55,30 +54,22 @@ pub fn get_header(header: String) -> Result<(String, String), crate::Error> {
     Ok((key.to_string(), value.to_string()))
 }
 
+#[derive(Default)]
 pub struct ReadStream {
     request_line: Option<(String, String, String)>,
-    pub header_map: HashMap<String, String>,
+    pub headers: Headers,
     body_bytes: Vec<u8>,
     multipart_form_data: Option<MultipartFormData>,
 }
 
 impl ReadStream {
-    pub fn new() -> Self {
-        ReadStream {
-            request_line: None,
-            header_map: HashMap::new(),
-            body_bytes: vec![],
-            multipart_form_data: None,
-        }
-    }
-
     pub fn write_header(&mut self, header_bytes: Vec<u8>) -> Result<(), crate::Error> {
         let header = String::from_utf8(header_bytes).unwrap();
         if self.request_line.is_none() {
             self.request_line = Some(get_request_line(header));
         } else {
             let (key, value) = get_header(header)?;
-            self.header_map.insert(key.to_lowercase(), value);
+            self.headers.insert(&key, &value);
         }
         Ok(())
     }
@@ -109,7 +100,7 @@ impl ReadStream {
         request.set_full_path(request_line.1);
         request.protocol_and_version = request_line.2;
 
-        request.header_map = self.header_map;
+        request.headers = self.headers;
 
         request.body_bytes = self.body_bytes;
         if let Some(multipart_form_data) = self.multipart_form_data {
@@ -122,16 +113,18 @@ impl ReadStream {
 
 impl ReadStream {
     pub fn is_multipart_form_data(&mut self) -> bool {
-        if let Some(content_type) = self.header_map.get("Content-Type") {
-            let re = Regex::new(r"^multipart/form-data; boundary=(.*?)$").unwrap();
-            if let Some(caps) = re.captures(content_type) {
-                if let Some(boundary) = caps.get(1).map(|m| m.as_str()) {
-                    self.multipart_form_data = Some(MultipartFormData {
-                        boundary: boundary.to_string(),
-                        form_data_vec: vec![],
-                        temp_form_data: None,
-                    });
-                    return true;
+        if let Some(content_type) = self.headers.get("Content-Type") {
+            if let Some(content_type) = content_type.last() {
+                let re = Regex::new(r"^multipart/form-data; boundary=(.*?)$").unwrap();
+                if let Some(caps) = re.captures(content_type) {
+                    if let Some(boundary) = caps.get(1).map(|m| m.as_str()) {
+                        self.multipart_form_data = Some(MultipartFormData {
+                            boundary: boundary.to_string(),
+                            form_data_vec: vec![],
+                            temp_form_data: None,
+                        });
+                        return true;
+                    }
                 }
             }
         }

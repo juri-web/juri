@@ -38,7 +38,7 @@ pub async fn read_request(
 ) -> std::result::Result<Request, crate::Error> {
     // https://www.cnblogs.com/nxlhero/p/11670942.html
     // https://rustcc.cn/article?id=2b7eb30b-61ae-4a3d-96fd-fc897ab7b1e0
-    let mut read_stream = ReadStream::new();
+    let mut read_stream = ReadStream::default();
     let mut line = Line::new();
 
     // Body: None 读取完成, True 可能读取完成, False 未完成
@@ -92,21 +92,23 @@ pub async fn read_request(
                     break;
                 }
             }
-        } else if let Some(content_length) = read_stream.header_map.get("Content-Length") {
-            // 处理读取 header 时，读取数据大小小于缓冲区大小，但是 header 已经读取完毕
-            if let Ok(content_length) = content_length.parse::<usize>() {
-                if content_length != 0 && content_length > already_read_body_length {
-                    loop {
-                        let (bytes_count, buffer) = read_buffer(stream, config).await?;
-                        if bytes_count == 0 {
-                            break;
-                        }
+        } else if let Some(content_length) = read_stream.headers.get("Content-Length") {
+            if let Some(content_length) = content_length.last() {
+                // 处理读取 header 时，读取数据大小小于缓冲区大小，但是 header 已经读取完毕
+                if let Ok(content_length) = content_length.parse::<usize>() {
+                    if content_length != 0 && content_length > already_read_body_length {
+                        loop {
+                            let (bytes_count, buffer) = read_buffer(stream, config).await?;
+                            if bytes_count == 0 {
+                                break;
+                            }
 
-                        let body_bytes = &mut buffer[..bytes_count].to_vec();
-                        read_stream.write_body(body_bytes).await?;
+                            let body_bytes = &mut buffer[..bytes_count].to_vec();
+                            read_stream.write_body(body_bytes).await?;
 
-                        if bytes_count < BUFFER_SIZE {
-                            break;
+                            if bytes_count < BUFFER_SIZE {
+                                break;
+                            }
                         }
                     }
                 }
