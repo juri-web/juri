@@ -1,3 +1,4 @@
+use chrono::prelude::*;
 use std::time::{Duration, SystemTime};
 
 #[derive(Default)]
@@ -83,7 +84,12 @@ impl Cookie {
 
 impl ToString for Cookie {
     fn to_string(&self) -> String {
-        let mut s = format!("{}{}", self.name, self.value);
+        let mut s = format!("{}={}", self.name, self.value);
+        if let Some(expires) = &self.expires {
+            let expires: DateTime<Utc> = expires.clone().into();
+            let expires = expires.format("%d %b %Y %H:%M:%S GMT").to_string();
+            s.push_str(&format!("; expires=Wed, {}", expires));
+        }
         if let Some(max_age) = &self.max_age {
             s.push_str(&format!("; max-age={}", max_age.as_secs_f64()));
         }
@@ -110,7 +116,14 @@ impl ToString for Cookie {
 fn test_cookie() {
     let mut cookie = Cookie::new("hi", "hello");
     cookie.set_expires(Some(SystemTime::now()));
+    println!("{}", cookie.to_string());
+}
 
-    let a = SystemTime::now();
-    println!("{:#?}", a);
+#[test]
+fn text_time_format() {
+    let expires = SystemTime::now();
+    let expires: DateTime<Utc> = expires.clone().into();
+    // let expires = expires.with_hour(23).unwrap();
+    let expires = expires.format("%d %b %Y %H:%M:%S %I GMT").to_string();
+    println!("{expires}");
 }

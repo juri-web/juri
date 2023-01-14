@@ -28,4 +28,7 @@ byteorder = "1.4.3"
 sha1 = "0.10.5"
 base64 = "0.20.0"
 
+# 时间
+chrono = "0.4.23"
+
 [dev-dependencies]
