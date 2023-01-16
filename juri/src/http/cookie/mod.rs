@@ -86,7 +86,7 @@ impl ToString for Cookie {
     fn to_string(&self) -> String {
         let mut s = format!("{}={}", self.name, self.value);
         if let Some(expires) = &self.expires {
-            let expires: DateTime<Utc> = expires.clone().into();
+            let expires: DateTime<Utc> = (*expires).into();
             let expires = expires.format("%d %b %Y %H:%M:%S GMT").to_string();
             s.push_str(&format!("; expires=Wed, {}", expires));
         }
