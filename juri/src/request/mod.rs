@@ -1,8 +1,8 @@
 use crate::byte::FormData;
+use crate::http::{HeaderValues, Headers};
+use crate::HTTPMethod;
 use regex::Regex;
 use std::collections::HashMap;
-mod http_method;
-pub use http_method::HTTPMethod;
 
 #[derive(Clone)]
 pub struct Request {
@@ -10,7 +10,7 @@ pub struct Request {
     pub full_path: String,
     pub protocol_and_version: String,
     pub path: String,
-    pub(crate) header_map: HashMap<String, String>,
+    pub headers: Headers,
     pub(crate) params_map: HashMap<String, String>,
     query_str: String,
     pub hash: String,
@@ -25,7 +25,7 @@ impl Default for Request {
             full_path: Default::default(),
             protocol_and_version: Default::default(),
             path: Default::default(),
-            header_map: Default::default(),
+            headers: Default::default(),
             params_map: Default::default(),
             query_str: Default::default(),
             hash: Default::default(),
@@ -72,14 +72,27 @@ impl Request {
     }
 
     pub fn header(&self, key: &str) -> Option<String> {
-        if self.header_map.is_empty() {
-            return None;
+        Some(self.header_multi_value(key)?.last()?.clone())
+    }
+
+    pub fn header_multi_value(&self, key: &str) -> Option<HeaderValues> {
+        if let Some(values) = self.headers.get(&key.to_lowercase()) {
+            return Some(values.clone());
         }
 
-        if let Some(value) = self.header_map.get(&key.to_lowercase()) {
-            return Some(value.to_string());
-        }
+        None
+    }
 
+    pub fn cookie(&self, key: &str) -> Option<String> {
+        if let Some(cookie) = self.header("Cookie") {
+            let re = Regex::new(&format!(r"(\;|^)\s*{}=(.*?)\s*(\;|$)", key)).unwrap();
+            let caps = re.captures(&cookie);
+            if let Some(caps) = caps {
+                if let Some(value) = caps.get(2) {
+                    return Some(value.as_str().to_string());
+                }
+            }
+        }
         None
     }
 
@@ -137,9 +150,7 @@ mod test {
     #[test]
     fn header() {
         let mut request = Request::default();
-        request
-            .header_map
-            .insert("Context-Type".to_string().to_lowercase(), "hi".to_string());
+        request.headers.insert("Context-Type", "hi");
         assert_eq!(request.header("context-type"), Some("hi".to_string()));
         assert_eq!(request.header("Context-type"), Some("hi".to_string()));
         assert_eq!(request.header("Context-Type"), Some("hi".to_string()));

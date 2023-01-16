@@ -1,4 +1,4 @@
-use crate::{request::HTTPMethod, RouteOrWSRoute, Router};
+use crate::{HTTPMethod, RouteOrWSRoute, Router};
 
 pub struct RouterRoute<'a> {
     pub router: &'a mut Router,

@@ -52,22 +52,10 @@ mod test {
 
         request.protocol_and_version = "HTTP/1.1".to_string();
 
-        request.header_map.insert(
-            "Connection".to_string().to_lowercase(),
-            "Upgrade".to_string(),
-        );
-        request.header_map.insert(
-            "Upgrade".to_string().to_lowercase(),
-            "websocket".to_string(),
-        );
-        request.header_map.insert(
-            "Sec-WebSocket-Version".to_string().to_lowercase(),
-            "13".to_string(),
-        );
-        request.header_map.insert(
-            "Sec-WebSocket-Key".to_string().to_lowercase(),
-            "-----".to_string(),
-        );
+        request.headers.insert("Connection", "Upgrade");
+        request.headers.insert("Upgrade", "websocket");
+        request.headers.insert("Sec-WebSocket-Version", "13");
+        request.headers.insert("Sec-WebSocket-Key", "-----");
 
         let _ws_response = test_handle_success(&request).unwrap();
     }

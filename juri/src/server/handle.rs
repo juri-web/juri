@@ -8,7 +8,6 @@ use crate::{
 };
 use async_std::{net::TcpStream, sync::Arc};
 use colored::*;
-use std::collections::HashMap;
 
 pub async fn handle_request(
     mut stream: TcpStream,
@@ -53,7 +52,7 @@ pub async fn handle_request(
                                 Err(err) => match err {
                                     ResponseAndError::Error(e) => Response {
                                         status_code: e.code,
-                                        headers: HashMap::new(),
+                                        headers: Default::default(),
                                         body: ResponseBody::None,
                                     },
                                     ResponseAndError::Response(response) => response,
@@ -86,7 +85,7 @@ pub async fn handle_request(
                                 Err(err) => match err {
                                     ResponseAndError::Error(e) => Response {
                                         status_code: e.code,
-                                        headers: HashMap::new(),
+                                        headers: Default::default(),
                                         body: ResponseBody::None,
                                     },
                                     ResponseAndError::Response(response) => response,
@@ -95,7 +94,7 @@ pub async fn handle_request(
                         }
                         MatchRouteHandler::None => Response {
                             status_code: 404,
-                            headers: HashMap::new(),
+                            headers: Default::default(),
                             body: ResponseBody::Text("".to_string()),
                         },
                     },
@@ -128,7 +127,7 @@ pub async fn handle_request(
                     100..=599 => {
                         let response = Response {
                             status_code: e.code,
-                            headers: HashMap::new(),
+                            headers: Default::default(),
                             body: ResponseBody::None,
                         };
                         send_stream(&mut stream, &config, None, &response).await;

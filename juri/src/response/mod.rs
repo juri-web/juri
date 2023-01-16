@@ -1,9 +1,10 @@
 mod into;
 
 pub use into::HTTPHandler;
-use std::collections::HashMap;
 use std::fs::metadata;
 use std::path::PathBuf;
+
+use crate::http::{Cookie, Headers};
 
 #[derive(Debug, Clone)]
 pub enum ResponseBody {
@@ -21,7 +22,7 @@ pub enum ResponseBodyByte {
 #[derive(Debug, Clone)]
 pub struct Response {
     pub status_code: u16,
-    pub headers: HashMap<String, String>,
+    pub headers: Headers,
     pub body: ResponseBody,
 }
 
@@ -36,8 +37,13 @@ impl Default for Response {
 }
 
 impl Response {
-    pub fn set_status_code(mut self, status_code: u16) -> Self {
+    pub fn set_status_code(&mut self, status_code: u16) -> &mut Self {
         self.status_code = status_code;
+        self
+    }
+
+    pub fn set_cookie(&mut self, cookie: Cookie) -> &mut Self {
+        self.headers.insert("Set-Cookie", &cookie.to_string());
         self
     }
 
@@ -63,12 +69,11 @@ impl Response {
 
 impl Response {
     pub fn html(content: &str) -> Response {
+        let mut headers = Headers::default();
+        headers.insert("Content-Type", "text/html;charset=utf-8");
         Response {
             status_code: 200,
-            headers: HashMap::from([(
-                "Content-Type".to_string(),
-                "text/html;charset=utf-8".to_string(),
-            )]),
+            headers,
             body: ResponseBody::Text(content.to_string()),
         }
     }

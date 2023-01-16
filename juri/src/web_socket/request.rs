@@ -26,7 +26,7 @@ impl WSRequestExt for Request {
             && self.header("Sec-WebSocket-Version") == Some("13".to_string())
             && self.header("Sec-WebSocket-Key").is_some()
         {
-            return Ok(WSResponse::success(self.header_map.clone()));
+            return Ok(WSResponse::success(self.headers.clone()));
         }
 
         Err(crate::Error {

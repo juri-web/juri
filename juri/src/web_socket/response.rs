@@ -1,15 +1,15 @@
-use crate::Response;
+use crate::{http::Headers, Response};
 
 use super::stream::WSStream;
 use futures_util::{future::BoxFuture, FutureExt};
 use sha1::{Digest, Sha1};
-use std::{collections::HashMap, future::Future};
+use std::future::Future;
 
 type BoxWebSocketHandler =
     Box<dyn FnOnce(WSStream) -> BoxFuture<'static, ()> + Send + Sync + 'static>;
 
 pub struct WSResponse {
-    request_header_map: HashMap<String, String>,
+    request_headers: Headers,
     pub response: Response,
     pub callback: Option<BoxWebSocketHandler>,
 }
@@ -17,22 +17,22 @@ pub struct WSResponse {
 impl WSResponse {
     pub fn new(response: Response) -> Self {
         WSResponse {
-            request_header_map: HashMap::new(),
+            request_headers: Headers::default(),
             response,
             callback: None,
         }
     }
 
-    pub fn success(request_header_map: HashMap<String, String>) -> Self {
+    pub fn success(request_headers: Headers) -> Self {
         let response = Response {
             status_code: 101,
-            headers: HashMap::new(),
+            headers: Default::default(),
             body: crate::ResponseBody::None,
         };
         WSResponse {
-            request_header_map,
             response,
             callback: None,
+            request_headers,
         }
     }
 
@@ -55,22 +55,20 @@ impl WSResponse {
     }
 
     pub fn into_response(&mut self) -> Response {
-        self.response
-            .headers
-            .insert("Connection".to_string(), "Upgrade".to_string());
-        self.response
-            .headers
-            .insert("Upgrade".to_string(), "websocket".to_string());
+        self.response.headers.insert("Connection", "Upgrade");
+        self.response.headers.insert("Upgrade", "websocket");
 
         let sec_websocket_accept = WSResponse::get_sec_websocket_accept(
-            self.request_header_map
+            self.request_headers
                 .get(&"Sec-WebSocket-Key".to_lowercase())
+                .unwrap()
+                .last()
                 .unwrap()
                 .to_string(),
         );
         self.response
             .headers
-            .insert("Sec-WebSocket-Accept".to_string(), sec_websocket_accept);
+            .insert("Sec-WebSocket-Accept", &sec_websocket_accept);
         self.response.clone()
     }
 }
