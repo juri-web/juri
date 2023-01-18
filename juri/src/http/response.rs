@@ -1,6 +1,3 @@
-mod into;
-
-pub use into::HTTPHandler;
 use std::fs::metadata;
 use std::path::PathBuf;
 
@@ -13,7 +10,8 @@ pub enum ResponseBody {
     None,
 }
 
-pub enum ResponseBodyByte {
+// TODO: refactor position to byte mod
+pub(crate) enum ResponseBodyByte {
     All(Vec<u8>),
     File(PathBuf),
     None,
@@ -58,7 +56,7 @@ impl Response {
         }
     }
 
-    pub fn get_body_bytes(&self) -> ResponseBodyByte {
+    pub(crate) fn get_body_bytes(&self) -> ResponseBodyByte {
         match &self.body {
             ResponseBody::Text(text) => ResponseBodyByte::All(text.as_bytes().to_vec()),
             ResponseBody::Path(path) => ResponseBodyByte::File(path.clone()),

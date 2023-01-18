@@ -1,4 +1,4 @@
-use crate::{response::HTTPHandler, HTTPMethod};
+use crate::{HTTPHandler, HTTPMethod};
 use std::{collections::HashMap, sync::Arc};
 mod ws_route;
 pub use ws_route::{WSRoute, WSRouterHandlerMap};

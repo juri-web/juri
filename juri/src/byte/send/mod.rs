@@ -2,7 +2,7 @@ mod mime;
 mod status_code;
 
 use self::status_code::status_code_to_text;
-use crate::response::ResponseBodyByte;
+use crate::ResponseBodyByte;
 use crate::{Config, Request, Response};
 use async_std::fs::File;
 use async_std::{net::TcpStream, prelude::*};
