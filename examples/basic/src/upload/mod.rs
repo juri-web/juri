@@ -6,7 +6,7 @@ pub static UPLOAD_PATH: &str = "./basic/upload";
 
 #[handler]
 pub fn upload_file(_request: &Request) -> juri::Result<Response> {
-    let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/upload_file.html")).unwrap();
+    let content = fs::read_to_string(TEMPLATE_PATH.to_owned() + "/upload_file.html").unwrap();
     Ok(Response::html(&content))
 }
 
@@ -14,7 +14,7 @@ pub fn upload_file(_request: &Request) -> juri::Result<Response> {
 pub fn post_upload_file(request: &Request) -> juri::Result<Response> {
     let file = request.file("file").unwrap();
     let file_name = file.file_name.clone().unwrap();
-    let path = format!("{UPLOAD_PATH}/{}", file_name);
+    let path = format!("{UPLOAD_PATH}/{file_name}");
     let path = Path::new(&path);
     file.copy(path).unwrap();
     Ok(Response::json("{}")?)

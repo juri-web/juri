@@ -1,8 +1,10 @@
 mod append;
+mod http_handler;
 mod match_router;
 mod route;
 
 use append::{AtPath, RouterRoute};
+pub use http_handler::HTTPHandler;
 pub use match_router::{match_route_params, MatchRouteHandler, MatchRouter};
 pub use route::{Route, RouteHandlerMap, RouteMap, RouteOrWSRoute, WSRoute, WSRouterHandlerMap};
 

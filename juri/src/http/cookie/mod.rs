@@ -88,7 +88,7 @@ impl ToString for Cookie {
         if let Some(expires) = &self.expires {
             let expires: DateTime<Utc> = (*expires).into();
             let expires = expires.format("%d %b %Y %H:%M:%S GMT").to_string();
-            s.push_str(&format!("; expires=Wed, {}", expires));
+            s.push_str(&format!("; expires=Wed, {expires}"));
         }
         if let Some(max_age) = &self.max_age {
             s.push_str(&format!("; max-age={}", max_age.as_secs_f64()));
@@ -100,10 +100,10 @@ impl ToString for Cookie {
             s.push_str("; HttpOnly");
         }
         if let Some(domain) = &self.domain {
-            s.push_str(&format!("; Domain={}", domain));
+            s.push_str(&format!("; Domain={domain}"));
         }
         if let Some(path) = &self.path {
-            s.push_str(&format!("; Path={}", path));
+            s.push_str(&format!("; Path={path}"));
         }
         if let Some(same_site) = &self.same_site {
             s.push_str(&format!("; SameSite={}", same_site.to_string()));

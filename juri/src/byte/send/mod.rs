@@ -2,7 +2,7 @@ mod mime;
 mod status_code;
 
 use self::status_code::status_code_to_text;
-use crate::response::ResponseBodyByte;
+use crate::ResponseBodyByte;
 use crate::{Config, Request, Response};
 use async_std::fs::File;
 use async_std::{net::TcpStream, prelude::*};
@@ -23,7 +23,7 @@ fn generate_response_header_bytes(
         status_code_to_text(response.status_code)
     );
     let server = "Server: Rust\r\n";
-    let mut headers_str = format!("{}{}", status, server);
+    let mut headers_str = format!("{status}{server}");
 
     let mut headers = response.headers.clone();
 
@@ -55,7 +55,7 @@ fn generate_response_header_bytes(
 
     for (key, values) in headers.iter() {
         for value in values.iter() {
-            headers_str.push_str(format!("{}: {}\r\n", key, value).as_str());
+            headers_str.push_str(format!("{key}: {value}\r\n").as_str());
         }
     }
 

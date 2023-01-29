@@ -1,4 +1,4 @@
-use crate::{response::HTTPHandler, Router};
+use crate::{HTTPHandler, Router};
 use std::sync::Arc;
 
 pub struct AtPath<'a> {

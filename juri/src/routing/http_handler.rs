@@ -1,5 +1,4 @@
-use super::Response;
-use crate::Request;
+use crate::{Request, Response};
 use async_trait::async_trait;
 
 #[async_trait]
