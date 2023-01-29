@@ -303,6 +303,34 @@ router.get(&quot;/one/:chapters/three&quot;, handle_index);
 router.get(&quot;/one/:chapters+&quot;, handle_index);
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h2 id="请求request"><a class="header" href="#请求request">请求（Request）</a></h2>
+<h2 id="header"><a class="header" href="#header">Header</a></h2>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 获取 header
+pub fn header(&amp;self, key: &amp;str) -&gt; Option&lt;String&gt;;
+
+/// 获取多个 key 相同的值
+pub fn header_multi_value(&amp;self, key: &amp;str) -&gt; Option&lt;HeaderValues&gt;;
+<span class="boring">}
+</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 获取 cookie
+pub fn cookie(&amp;self, key: &amp;str) -&gt; Option&lt;String&gt;;
+<span class="boring">}
+</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// 获取路径参数
+pub fn param(&amp;self, key: &amp;str) -&gt; Option&lt;String&gt;;
+
+/// 获取查询参数
+pub fn query(&amp;self, key: &amp;str) -&gt; Option&lt;String&gt;;
+<span class="boring">}
+</span></code></pre></pre>
 <h2 id="formdata"><a class="header" href="#formdata">FormData</a></h2>
 <p><a href="request/./form-data.html">FormData</a></p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="formdata-1"><a class="header" href="#formdata-1">FormData</a></h1>
