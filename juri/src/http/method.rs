@@ -45,6 +45,6 @@ impl fmt::Display for HTTPMethod {
             HTTPMethod::GET => String::from("GET"),
             HTTPMethod::POST => String::from("POST"),
         };
-        write!(f, "{}", method_str)
+        write!(f, "{method_str}")
     }
 }

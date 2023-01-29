@@ -21,7 +21,7 @@ impl StaticFilePlugin {
             let Some(dir) = dir.to_str() else {
                 continue;
             };
-            let file_path = PathBuf::from(format!("{}/{}", dir, url_path));
+            let file_path = PathBuf::from(format!("{dir}/{url_path}"));
             if file_path.exists() && file_path.is_file() {
                 return Some(file_path);
             }

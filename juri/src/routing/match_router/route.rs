@@ -37,7 +37,7 @@ impl MatchRoute {
                 }
             }
             Self {
-                path: format!(r"^{}$", path_re),
+                path: format!(r"^{path_re}$"),
                 params: path_params,
                 handler,
             }
