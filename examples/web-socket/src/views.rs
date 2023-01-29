@@ -16,7 +16,7 @@ pub fn handle_ws(request: &juri::Request) -> juri::Result<WSResponse> {
             let message = stream.read().await.unwrap();
             match message {
                 Message::Text(text) => {
-                    println!("ws test: {}", text);
+                    println!("ws test: {text}");
                     stream.send(Message::Text("hi".to_string())).await.unwrap();
                 }
                 Message::Binary(_) => todo!(),
@@ -33,6 +33,6 @@ pub fn handle_ws(request: &juri::Request) -> juri::Result<WSResponse> {
 
 #[get("/")]
 pub fn handle_index(_request: &juri::Request) -> juri::Result<Response> {
-    let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/index.html")).unwrap();
+    let content = fs::read_to_string(TEMPLATE_PATH.to_owned() + "/index.html").unwrap();
     Ok(Response::html(&content))
 }

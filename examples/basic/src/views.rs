@@ -12,7 +12,7 @@ pub fn handle_index(request: &Request) -> juri::Result<Response> {
             .query("a")
             .map_or("".to_string(), |q| q.as_str().to_string())
     );
-    let content = fs::read_to_string(&(TEMPLATE_PATH.to_owned() + "/hello.html")).unwrap();
+    let content = fs::read_to_string(TEMPLATE_PATH.to_owned() + "/hello.html").unwrap();
     Ok(Response::html(&content))
 }
 
