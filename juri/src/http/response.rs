@@ -77,7 +77,7 @@ impl Response {
     }
 
     pub fn html_file(file_path: PathBuf) -> Result<Response, crate::Error> {
-        if file_path.exists() && file_path.is_file() {
+        if !file_path.exists() || !file_path.is_file() {
             return Err(crate::Error {
                 code: 401,
                 reason: format!("File cannot be found, FilePath: {:?}", file_path.to_str()),
