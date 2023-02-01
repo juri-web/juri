@@ -28,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let current_dir = env::current_dir().unwrap();
     let mut static_file_plugin = StaticFilePlugin::new(HashMap::from([(
         "/static",
-        vec![current_dir.join("example").join("static")],
+        vec![current_dir.join("basic").join("static")],
     )]));
 
     static_file_plugin.last_modified(true);
