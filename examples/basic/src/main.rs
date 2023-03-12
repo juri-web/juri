@@ -26,10 +26,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let router = init_router();
 
     let current_dir = env::current_dir().unwrap();
-    let static_file_plugin = StaticFilePlugin::new(HashMap::from([(
+    let mut static_file_plugin = StaticFilePlugin::new(HashMap::from([(
         "/static",
-        vec![current_dir.join("example").join("static")],
+        vec![current_dir.join("basic").join("static")],
     )]));
+
+    static_file_plugin.last_modified(true);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 7878));
     juri::Server::bind(addr)
