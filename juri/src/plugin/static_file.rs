@@ -35,7 +35,7 @@ impl StaticFilePlugin {
                 continue;
             };
             let file_path = PathBuf::from(format!("{dir}/{url_path}"));
-            // let mut file_path = dir.clone(); 
+            // let mut file_path = dir.clone();
             // let url_paths: Vec<_> =  url_path.split("/").collect();
             // for url_path in url_paths.iter() {
             //     file_path = file_path.join(url_path);
