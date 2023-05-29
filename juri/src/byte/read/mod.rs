@@ -29,6 +29,8 @@ async fn read_buffer(
         reason: e.to_string(),
     })??;
 
+    let buffer = buffer.drain(0..bytes_count).collect();
+
     Ok((bytes_count, buffer))
 }
 
